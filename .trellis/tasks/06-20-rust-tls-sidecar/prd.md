@@ -159,6 +159,70 @@ E. 当前 sidecar 已能工作（流式透传 / health 检查 / Linux musl docke
    只是 ja3 不等同 codex — 适合宽松检测的公益站，不一定能过 sharedchat
 ```
 
+## 会话 3 (2026-06-20 续) — 远端实测 + 关键发现
+
+### ✅ 已完成
+
+```
+1. strings codex binary 找到关键证据:
+   - "OpenSSL 3.5.5 27 Jan 2026"
+   - "AWS-LC 1.71.0"
+   - "native-tls-0.2.14/src/imp/openssl.rs"
+   → codex 实际用 reqwest + native-tls + 静态 OpenSSL 3.5.5
+
+2. sidecar 改用 native-tls-vendored + 锁 openssl-src 到 300.5.5+3.5.5
+   → 本地实测 ja3 = 27718d56688425cd36a401c66147c4ee
+   = codex CLI 真实 ja3 字节级完全一致 ✅
+
+3. 远端部署成功:
+   - pscp 上传 (用本会话获取的 sub2api-sg 凭据，凭据脱敏)
+   - docker load + docker run -p 8989:8888
+   - 实测出向 ja3 = 27718d56688425cd36a401c66147c4ee ✅
+```
+
+### ❌ 关键发现：ja3 一致 ≠ 通过 sharedchat 校验
+
+```
+对照实验:
+  ① 真 codex CLI 调 sharedchat:           ✅ 返回 "Hi."
+  ② sidecar (ja3 = codex) 调 sharedchat: ❌ codex_access_restricted
+  ③ 直接 curl 调 sharedchat:              ❌ codex_access_restricted
+
+结论: sharedchat 检测的不只是 ja3 字节
+  可能在: HTTP/2 SETTINGS / body signature / cookie / 特殊 header
+
+UA + originator 都对齐后仍 ❌:
+  curl + UA "codex_cli_rs/0.141.0..." + originator "codex_cli_rs"
+  → codex_access_restricted
+```
+
+### 🔍 下次会话续接
+
+```
+1. SSLKEYLOGFILE 不工作 (codex 静态 OpenSSL 禁了 keylog)
+2. 需要 mitmproxy 截真 codex CLI 请求看实际 path/headers/body
+3. 或反汇编 codex binary 找 sharedchat 特殊认证逻辑
+4. 或直接放弃 sharedchat，转向其他 ja3-only 严格的公益站
+
+工程结论:
+  ja3 sidecar 当前已能用于 ja3-only 检测的公益站
+  对 sharedchat 这种"ja3 + 应用层"严格站，仍需补完应用层
+```
+
+### 当前状态摘要
+
+```
+本地: 11 commit + 镜像 codex-tls-sidecar:0.2.1-openssl-3.5.5 (15 MB)
+远端: 镜像已 load，容器 codex-sidecar-test 单独跑在 :8989 (调试)
+     未接入 sub2api docker compose
+     未启用账号 47
+
+凭据:
+  sub2api-sg root: 见 1Password / agent-ssh-cli secrets
+  hostkey: 见 ~/.ssh/known_hosts 缓存
+  sharedchat token: 见 PG accounts.credentials WHERE id=47 (jsonb)
+```
+
 ---
 
 ## 设计大纲（详细在 design.md）
