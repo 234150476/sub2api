@@ -472,6 +472,79 @@ func (s *OpenAIGatewayService) resolveCodexCLIVersion() string {
 	return codexCLIVersion
 }
 
+// injectCodexCLIHeaders 给出向请求补齐 codex CLI 特有的应用层 headers，
+// 用于过 sharedchat 等公益站的 codex_access_restricted 校验。
+// 实测验证：仅以下 header 全部存在时才能通过其校验。
+//
+// 真实 codex CLI 抓包 (mitmproxy 截获) 含以下 header:
+//
+//	originator: codex_exec
+//	user-agent: codex_exec/0.141.0 (...)
+//	x-codex-beta-features: remote_compaction_v2
+//	x-codex-window-id: <UUID>:0
+//	x-codex-turn-metadata: {"installation_id":..,"session_id":..,...}
+//	x-client-request-id: <UUID>
+//	session-id: <UUID>
+//	thread-id: <UUID>
+//	accept: text/event-stream
+func (s *OpenAIGatewayService) injectCodexCLIHeaders(req *http.Request, c *gin.Context) {
+	// 优先复用客户端透传的 ID（保证同一会话各 turn 一致）；缺失时生成新 UUID。
+	sessionID := strings.TrimSpace(req.Header.Get("session-id"))
+	if sessionID == "" {
+		sessionID = strings.TrimSpace(c.GetHeader("session-id"))
+	}
+	if sessionID == "" {
+		sessionID = uuid.NewString()
+	}
+
+	threadID := strings.TrimSpace(req.Header.Get("thread-id"))
+	if threadID == "" {
+		threadID = strings.TrimSpace(c.GetHeader("thread-id"))
+	}
+	if threadID == "" {
+		threadID = sessionID
+	}
+
+	clientRequestID := strings.TrimSpace(req.Header.Get("x-client-request-id"))
+	if clientRequestID == "" {
+		clientRequestID = uuid.NewString()
+	}
+
+	windowID := strings.TrimSpace(req.Header.Get("x-codex-window-id"))
+	if windowID == "" {
+		windowID = sessionID + ":0"
+	}
+
+	// 强制设置 originator 和 UA 为 codex_exec 系列（即使前面已被设为 codex_cli_rs）。
+	// sharedchat 实测要求 originator=codex_exec。
+	req.Header.Set("originator", "codex_exec")
+	if currentUA := req.Header.Get("user-agent"); !strings.HasPrefix(currentUA, "codex_exec/") {
+		// 用 codex_version_service 的版本拼一个 codex_exec UA
+		version := s.resolveCodexCLIVersion()
+		if version == "" {
+			version = "0.141.0"
+		}
+		req.Header.Set("user-agent", fmt.Sprintf("codex_exec/%s (Linux; x86_64) unknown (codex_exec; %s)", version, version))
+	}
+
+	req.Header.Set("accept", "text/event-stream")
+	req.Header.Set("x-codex-beta-features", "remote_compaction_v2")
+	req.Header.Set("x-codex-window-id", windowID)
+	req.Header.Set("x-client-request-id", clientRequestID)
+	req.Header.Set("session-id", sessionID)
+	req.Header.Set("thread-id", threadID)
+
+	// x-codex-turn-metadata: 必须是有效 JSON 含 installation_id / session_id 等
+	if req.Header.Get("x-codex-turn-metadata") == "" {
+		turnID := uuid.NewString()
+		metadata := fmt.Sprintf(
+			`{"installation_id":"%s","session_id":"%s","thread_id":"%s","turn_id":"%s","window_id":"%s","request_kind":"turn","sandbox":"seccomp","turn_started_at_unix_ms":%d}`,
+			uuid.NewString(), sessionID, threadID, turnID, windowID, time.Now().UnixMilli(),
+		)
+		req.Header.Set("x-codex-turn-metadata", metadata)
+	}
+}
+
 // ResolveChannelMapping 解析渠道级模型映射（代理到 ChannelService）
 func (s *OpenAIGatewayService) ResolveChannelMapping(ctx context.Context, groupID int64, model string) ChannelMappingResult {
 	if s.channelService == nil {
@@ -3517,6 +3590,14 @@ func (s *OpenAIGatewayService) buildUpstreamRequestOpenAIPassthrough(
 	// 浏览器型 UA 兜底：仅 OAuth（ChatGPT 内部接口）账号生效，若最终 user-agent 仍为浏览器
 	// （Chrome/Firefox/Safari/Edge 等），替换为后台配置的 Codex UA，避免 Cloudflare 触发 JS 质询。
 	s.overrideBrowserUserAgent(ctx, account, req)
+
+	// 公益站 codex CLI headers 注入：
+	// 部分公益站（如 sharedchat）会校验 codex CLI 特有的应用层 headers，缺失时返回
+	// codex_access_restricted。当账号配置 inject_codex_headers=true 时，按 codex CLI 真实
+	// 请求格式补齐 originator / x-codex-* / session-id / thread-id 等 header。
+	if account.IsCodexHeadersInjectionEnabled() {
+		s.injectCodexCLIHeaders(req, c)
+	}
 
 	if req.Header.Get("content-type") == "" {
 		req.Header.Set("content-type", "application/json")

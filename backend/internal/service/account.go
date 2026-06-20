@@ -1608,6 +1608,22 @@ func (a *Account) IsCodexSidecarEnabled() bool {
 	return false
 }
 
+// IsCodexHeadersInjectionEnabled 检查是否对该账号转发的请求注入 codex CLI 特有 headers。
+// 用于过 sharedchat 等公益站的 codex_access_restricted 校验：
+// 它们检测的不是 ja3，而是 originator / x-codex-* / session-id / thread-id 等应用层 header。
+// extra.inject_codex_headers=true 时启用。
+func (a *Account) IsCodexHeadersInjectionEnabled() bool {
+	if a.Extra == nil {
+		return false
+	}
+	if v, ok := a.Extra["inject_codex_headers"]; ok {
+		if enabled, ok := v.(bool); ok {
+			return enabled
+		}
+	}
+	return false
+}
+
 // GetTLSFingerprintProfileID 获取账号绑定的 TLS 指纹模板 ID
 // 返回 0 表示未绑定（使用内置默认 profile）
 func (a *Account) GetTLSFingerprintProfileID() int64 {
