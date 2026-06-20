@@ -80,6 +80,26 @@ tokio = "1"
 | **D4 codex 复用方式** | **不 vendor 源码，仅锁依赖版本** | 关键发现：codex 没定制 TLS 配置 |
 | **D5 并发模型** | 单进程 + tokio + 共享 reqwest::Client | 50MB 常驻，1000+ 并发轻松 |
 
+## 已决（下次会话开工时已锁定）
+
+| 决策点 | 选择 | 理由 |
+|---|---|---|
+| **D6 接入策略** | a. 新增并存 (UseSidecar 开关) | utls 留备用，新代码风险隔离 |
+| **D7 Sidecar API 形态** | a. JSON 包装 + chunked 响应 | 简单可调试，chunked 自然支持 SSE |
+
+## Sidecar 接入点（已定位）
+
+`backend/internal/repository/http_upstream.go:206 DoWithTLS()` = sub2api 所有出向调用汇聚点。
+找到 8+ 处调用方（claude_usage_service / account_test_service / etc.）。
+只需在 DoWithTLS 加分支：
+
+```go
+if profile != nil && profile.UseSidecar {
+    return s.doViaSidecar(req, profile.SidecarURL)  // 新增
+}
+// 原 utls 路径
+```
+
 ---
 
 ## 设计大纲（详细在 design.md）
