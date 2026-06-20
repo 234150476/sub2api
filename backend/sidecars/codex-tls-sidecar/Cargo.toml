@@ -5,12 +5,11 @@ edition = "2021"
 publish = false
 
 [dependencies]
-# 锁定 codex (codex-rs/Cargo.toml workspace.dependencies) 同款版本
-# 这是 ja3 = 27718d56688425cd36a401c66147c4ee 的来源
-# 严格对齐 codex-rs/Cargo.toml workspace.dependencies (commit 2026-06-20):
-#   reqwest = { version = "0.12", features = ["cookies"] }
-# stream feature 也保留 — sidecar 透传 SSE 必需，不影响 ClientHello 字节
-reqwest = { version = "0.12", features = ["cookies", "stream"] }
+# 严格对齐 codex 真实编译产物：
+#   - target: x86_64-unknown-linux-musl (静态链接)
+#   - TLS: musl 不能用 native-tls/OpenSSL，所以 reqwest 用 rustls + aws-lc-rs
+#   - 这是 codex 0.141.0 npm 包里的 ELF static-pie linked binary 实情
+reqwest = { version = "0.12", default-features = false, features = ["cookies", "stream", "rustls-tls", "http2"] }
 rustls = { version = "0.23", default-features = false, features = ["aws_lc_rs", "std"] }
 
 # 服务端 / runtime

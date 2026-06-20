@@ -1,30 +1,23 @@
-FROM rust:1.83-slim AS builder
+FROM rust:1.96-alpine AS builder
 
-# aws-lc-sys 编译需要 cmake + perl + golang
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    cmake \
-    perl \
-    golang \
-    pkg-config \
-    libssl-dev \
-    && rm -rf /var/lib/apt/lists/*
+# musl + aws-lc-sys 编译需要 cmake + perl + go + make
+RUN apk add --no-cache cmake perl go make musl-dev pkgconfig openssl-dev
 
 WORKDIR /build
 
 COPY Cargo.toml Cargo.lock* ./
 COPY src ./src
 
-RUN cargo build --release --locked || cargo build --release
+# 用 musl target，对齐 codex 真实编译产物
+RUN cargo build --release --target x86_64-unknown-linux-musl --locked || cargo build --release --target x86_64-unknown-linux-musl
 
-FROM debian:bookworm-slim
+FROM alpine:3.20
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates \
-    curl \
-    && rm -rf /var/lib/apt/lists/* \
-    && useradd --system --uid 1000 --no-create-home sidecar
+RUN apk add --no-cache ca-certificates curl \
+    && adduser -D -u 1000 sidecar
 
-COPY --from=builder /build/target/release/codex-tls-sidecar /usr/local/bin/codex-tls-sidecar
+COPY --from=builder /build/target/x86_64-unknown-linux-musl/release/codex-tls-sidecar /usr/local/bin/codex-tls-sidecar
+COPY --from=builder /build/target/x86_64-unknown-linux-musl/release/probe /usr/local/bin/codex-tls-probe
 
 USER sidecar
 EXPOSE 8888
