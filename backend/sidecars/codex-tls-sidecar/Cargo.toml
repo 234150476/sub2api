@@ -7,9 +7,9 @@ publish = false
 [dependencies]
 # 严格对齐 codex 真实编译产物：
 #   - target: x86_64-unknown-linux-musl (静态链接)
-#   - TLS: musl 不能用 native-tls/OpenSSL，所以 reqwest 用 rustls + aws-lc-rs
-#   - 这是 codex 0.141.0 npm 包里的 ELF static-pie linked binary 实情
-reqwest = { version = "0.12", default-features = false, features = ["cookies", "stream", "rustls-tls", "http2"] }
+#   - TLS: codex CI 启用 native-tls + 静态 OpenSSL 3.5.5（strings binary 验证）
+#   - 这是 codex CLI 30-cipher ja3 (DHE/RSA/CBC) 的来源
+reqwest = { version = "0.12", default-features = false, features = ["cookies", "stream", "default-tls", "http2", "native-tls-vendored"] }
 rustls = { version = "0.23", default-features = false, features = ["aws_lc_rs", "std"] }
 
 # 服务端 / runtime
