@@ -276,6 +276,10 @@ func (s *APIKeyService) snapshotFromAPIKey(ctx context.Context, apiKey *APIKey) 
 			MessagesDispatchModelConfig:     apiKey.Group.MessagesDispatchModelConfig,
 			ModelsListConfig:                apiKey.Group.ModelsListConfig,
 			RPMLimit:                        apiKey.Group.RPMLimit,
+			TrafficShapingEnabled:           apiKey.Group.TrafficShapingEnabled,
+			SSEEarlyKeepaliveEnabled:        apiKey.Group.SSEEarlyKeepaliveEnabled,
+			StreamSmoothingEnabled:          apiKey.Group.StreamSmoothingEnabled,
+			SilentRetry5xxEnabled:           apiKey.Group.SilentRetry5xxEnabled,
 		}
 	}
 	return snapshot
@@ -349,6 +353,10 @@ func (s *APIKeyService) snapshotToAPIKey(key string, snapshot *APIKeyAuthSnapsho
 			MessagesDispatchModelConfig:     snapshot.Group.MessagesDispatchModelConfig,
 			ModelsListConfig:                snapshot.Group.ModelsListConfig,
 			RPMLimit:                        snapshot.Group.RPMLimit,
+			TrafficShapingEnabled:           snapshot.Group.TrafficShapingEnabled,
+			SSEEarlyKeepaliveEnabled:        snapshot.Group.SSEEarlyKeepaliveEnabled,
+			StreamSmoothingEnabled:          snapshot.Group.StreamSmoothingEnabled,
+			SilentRetry5xxEnabled:           snapshot.Group.SilentRetry5xxEnabled,
 		}
 	}
 	s.compileAPIKeyIPRules(apiKey)

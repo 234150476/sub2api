@@ -276,7 +276,19 @@ func performTLSHandshake(ctx context.Context, conn net.Conn, profile *Profile, a
 	}
 
 	spec := buildClientHelloSpecFromProfile(profile)
-	tlsConn := utls.UClient(conn, &utls.Config{ServerName: host}, utls.HelloCustom)
+	// 修复 utls 1.8.2 内部不一致：defaultCurvePreferences() 把 X25519MLKEM768 (PQ) 放第一位，
+	// 但同库的 curveForCurveID() switch 不实现 PQ → 在 TLS 1.3 路径会抛
+	// "tls: CurvePreferences includes unsupported curve"。
+	// 显式设 CurvePreferences 只用 utls 真实支持的 4 个 ECDHE curve，强制跳过 PQ 分支。
+	tlsConn := utls.UClient(conn, &utls.Config{
+		ServerName: host,
+		CurvePreferences: []utls.CurveID{
+			utls.X25519,
+			utls.CurveP256,
+			utls.CurveP384,
+			utls.CurveP521,
+		},
+	}, utls.HelloCustom)
 
 	if err := tlsConn.ApplyPreset(spec); err != nil {
 		_ = conn.Close()

@@ -93,6 +93,13 @@ type APIKeyAuthGroupSnapshot struct {
 
 	// RPMLimit 分组级每分钟请求数上限（0 = 不限制）；用于 billing_cache_service.checkRPM 级联判断。
 	RPMLimit int `json:"rpm_limit"`
+
+	// 流量伪装开关（migration 154）；用于第三方聚合站友好型分组。
+	// 总开关关闭时所有子开关都不生效，所有字段默认 false 保证现有行为不变。
+	TrafficShapingEnabled    bool `json:"traffic_shaping_enabled"`
+	SSEEarlyKeepaliveEnabled bool `json:"sse_early_keepalive_enabled"`
+	StreamSmoothingEnabled   bool `json:"stream_smoothing_enabled"`
+	SilentRetry5xxEnabled    bool `json:"silent_retry_5xx_enabled"`
 }
 
 // APIKeyAuthCacheEntry 缓存条目，支持负缓存

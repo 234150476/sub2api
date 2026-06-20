@@ -814,6 +814,10 @@ func groupEntityToService(g *dbent.Group) *service.Group {
 		MessagesDispatchModelConfig:     g.MessagesDispatchModelConfig,
 		ModelsListConfig:                g.ModelsListConfig,
 		RPMLimit:                        g.RpmLimit,
+		TrafficShapingEnabled:           g.TrafficShapingEnabled,
+		SSEEarlyKeepaliveEnabled:        g.SseEarlyKeepaliveEnabled,
+		StreamSmoothingEnabled:          g.StreamSmoothingEnabled,
+		SilentRetry5xxEnabled:           g.SilentRetry5xxEnabled,
 		CreatedAt:                       g.CreatedAt,
 		UpdatedAt:                       g.UpdatedAt,
 	}
