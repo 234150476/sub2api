@@ -1,0 +1,40 @@
+[package]
+name = "codex-tls-sidecar"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+# 锁定 codex (codex-rs/Cargo.toml workspace.dependencies) 同款版本
+# 这是 ja3 = 27718d56688425cd36a401c66147c4ee 的来源
+# 严格对齐 codex-rs/Cargo.toml workspace.dependencies (commit 2026-06-20):
+#   reqwest = { version = "0.12", features = ["cookies"] }
+# stream feature 也保留 — sidecar 透传 SSE 必需，不影响 ClientHello 字节
+reqwest = { version = "0.12", features = ["cookies", "stream"] }
+rustls = { version = "0.23", default-features = false, features = ["aws_lc_rs", "std"] }
+
+# 服务端 / runtime
+axum = { version = "0.8", default-features = false, features = ["json", "tokio", "http1", "http2"] }
+tokio = { version = "1", features = ["full"] }
+tower = "0.5"
+
+# 序列化 / 流
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+bytes = "1"
+futures-util = "0.3"
+http = "1"
+http-body-util = "0.1"
+
+# 日志
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# base64 编码 body（避免 JSON 中带二进制问题）
+base64 = "0.22"
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+strip = true
