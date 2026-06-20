@@ -532,6 +532,7 @@ var ProviderSet = wire.NewSet(
 	NewAdminService,
 	NewGatewayService,
 	NewOpenAIGatewayService,
+	ProvideCodexVersionService,
 	wire.Bind(new(AccountRuntimeBlocker), new(*OpenAIGatewayService)),
 	NewOAuthService,
 	ProvideOpenAIOAuthService,
@@ -613,6 +614,16 @@ var ProviderSet = wire.NewSet(
 func ProvideUserPlatformQuotaUsageFlusher(cfg *config.Config, cache BillingCache, quotaRepo UserPlatformQuotaRepository, tw *TimingWheelService) *UserPlatformQuotaUsageFlusher {
 	svc := NewUserPlatformQuotaUsageFlusher(cfg, cache, quotaRepo, tw)
 	svc.Start()
+	return svc
+}
+
+// ProvideCodexVersionService 创建 CodexVersionService，并以 background context 触发首次拉取与周期任务。
+//
+// 即使 GitHub 不可达 / DB 缓存为空 / 配置为空，构造与 Start 都不会失败 ——
+// service 内部维护 4 层降级（GitHub → DB → fallback_version → 代码硬编码），调用方拿到的版本永远可用。
+func ProvideCodexVersionService(cfg *config.Config, settingRepo SettingRepository) *CodexVersionService {
+	svc := NewCodexVersionService(cfg, settingRepo)
+	svc.Start(context.Background())
 	return svc
 }
 

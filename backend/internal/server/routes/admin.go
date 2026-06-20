@@ -71,6 +71,9 @@ func RegisterAdminRoutes(
 		// 系统管理
 		registerSystemRoutes(admin, h)
 
+		// Codex CLI 指纹版本（自动跟版 + 手动刷新）
+		registerCodexVersionRoutes(admin, h)
+
 		// 订阅管理
 		registerSubscriptionRoutes(admin, h)
 
@@ -527,6 +530,20 @@ func registerSystemRoutes(admin *gin.RouterGroup, h *handler.Handlers) {
 		system.POST("/update", h.Admin.System.PerformUpdate)
 		system.POST("/rollback", h.Admin.System.Rollback)
 		system.POST("/restart", h.Admin.System.RestartService)
+	}
+}
+
+// registerCodexVersionRoutes 注册 Codex CLI 指纹版本管理路由：
+//   GET  /admin/codex-version          —— 当前版本/UA/数据来源/刷新时间
+//   POST /admin/codex-version/refresh  —— 强制从 GitHub 拉一次最新版本
+func registerCodexVersionRoutes(admin *gin.RouterGroup, h *handler.Handlers) {
+	if h == nil || h.Admin == nil || h.Admin.CodexVersion == nil {
+		return
+	}
+	codexVersion := admin.Group("/codex-version")
+	{
+		codexVersion.GET("", h.Admin.CodexVersion.GetStatus)
+		codexVersion.POST("/refresh", h.Admin.CodexVersion.Refresh)
 	}
 }
 

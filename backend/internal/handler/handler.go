@@ -23,6 +23,7 @@ type AdminHandlers struct {
 	Setting                *admin.SettingHandler
 	Ops                    *admin.OpsHandler
 	System                 *admin.SystemHandler
+	CodexVersion           *admin.CodexVersionHandler
 	Subscription           *admin.SubscriptionHandler
 	Usage                  *admin.UsageHandler
 	UserAttribute          *admin.UserAttributeHandler

@@ -799,6 +799,34 @@ type GatewayConfig struct {
 	// UserMessageQueue: 用户消息串行队列配置
 	// 对 role:"user" 的真实用户消息实施账号级串行化 + RPM 自适应延迟
 	UserMessageQueue UserMessageQueueConfig `mapstructure:"user_message_queue"`
+
+	// CodexCLI: Codex CLI 指纹自动跟版配置
+	// 控制转发上游时使用的 User-Agent / version header，定时从 GitHub 拉取最新版本号
+	CodexCLI GatewayCodexCLIConfig `mapstructure:"codex_cli"`
+}
+
+// GatewayCodexCLIConfig Codex CLI 指纹自动跟版配置。
+// 用于把转发上游时的 User-Agent / version header 锁定为最新发布的 Codex CLI 版本，
+// 避免上游因客户端版本过旧而拒绝请求（"codex_cli_only" / 公益站校验等场景）。
+type GatewayCodexCLIConfig struct {
+	// AutoUpdate: 是否定时从 GitHub 拉取最新 Codex CLI 版本号。
+	// 关闭时仅使用 FallbackVersion 作为静态版本。
+	AutoUpdate bool `mapstructure:"auto_update"`
+	// RefreshInterval: 自动刷新间隔（如 "6h"）。
+	RefreshInterval time.Duration `mapstructure:"refresh_interval"`
+	// FallbackVersion: GitHub 不可达且 DB 缓存为空时使用的兜底版本号（不含前缀）。
+	// 例如 "0.141.0"。
+	FallbackVersion string `mapstructure:"fallback_version"`
+	// UserAgentTemplate: User-Agent 模板，{{.Version}} 占位符将被替换为当前版本号。
+	// 示例: "codex_cli_rs/{{.Version}} (Ubuntu 24.04.0; x86_64) xterm-256color"
+	UserAgentTemplate string `mapstructure:"user_agent_template"`
+	// GitHubToken: 可选的 GitHub Personal Access Token，用于规避匿名 60次/小时 限速。
+	GitHubToken string `mapstructure:"github_token"`
+	// GitHubAPIURL: 拉取 release 的接口 URL，可指向自建镜像。
+	// 默认 https://api.github.com/repos/openai/codex/releases/latest
+	GitHubAPIURL string `mapstructure:"github_api_url"`
+	// HTTPTimeoutSeconds: 调 GitHub API 的超时时间（秒）。
+	HTTPTimeoutSeconds int `mapstructure:"http_timeout_seconds"`
 }
 
 // GatewayOpenAIHTTP2Config OpenAI HTTP 上游协议配置。
@@ -1819,6 +1847,14 @@ func setDefaults() {
 	viper.SetDefault("gateway.max_account_switches", 10)
 	viper.SetDefault("gateway.max_account_switches_gemini", 3)
 	viper.SetDefault("gateway.force_codex_cli", false)
+	// Codex CLI 指纹自动跟版（默认开启自动从 GitHub 拉取最新版）
+	viper.SetDefault("gateway.codex_cli.auto_update", true)
+	viper.SetDefault("gateway.codex_cli.refresh_interval", 6*time.Hour)
+	viper.SetDefault("gateway.codex_cli.fallback_version", "0.141.0")
+	viper.SetDefault("gateway.codex_cli.user_agent_template", "codex_cli_rs/{{.Version}} (Ubuntu 24.04.0; x86_64) xterm-256color")
+	viper.SetDefault("gateway.codex_cli.github_token", "")
+	viper.SetDefault("gateway.codex_cli.github_api_url", "https://api.github.com/repos/openai/codex/releases/latest")
+	viper.SetDefault("gateway.codex_cli.http_timeout_seconds", 10)
 	viper.SetDefault("gateway.codex_image_generation_bridge_enabled", false)
 	viper.SetDefault("gateway.openai_passthrough_allow_timeout_headers", false)
 	// OpenAI Responses WebSocket（默认开启；可通过 force_http 紧急回滚）
