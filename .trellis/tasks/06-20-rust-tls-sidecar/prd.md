@@ -100,6 +100,65 @@ if profile != nil && profile.UseSidecar {
 // 原 utls 路径
 ```
 
+## 实施进展（会话 2，2026-06-20 续）
+
+### ✅ 已完成（本地 git，8 commit 累计）
+
+```
+865e4c48 feat(sidecar): Rust 透明代理子项目 + codex 源码 vendor (A2 中量)
+55ff0c44 feat(tls): sub2api 接入 codex sidecar 透明代理路径
+8ec1a727 docs(rust-tls-sidecar): 锁定 D6/D7 决策 + Sidecar 接入点
+d5841805 fix(sidecar): musl + rustls-tls + http2 + 加 probe 二进制
+```
+
+### 🚨 关键技术发现（颠覆原 brainstorm 假设）
+
+1. **codex CLI 是 npm 包**：`@openai/codex` 0.141.0 → `x86_64-unknown-linux-musl` 静态 PIE 二进制（264 MB ELF）
+2. **codex 真包 ja3 = 27718d56688425cd36a401c66147c4ee** 含：
+   - 30 个 cipher（**含 TLS_DHE_RSA_*、TLS_RSA_*、*_CBC_***）
+   - supported_groups: X25519MLKEM768, X25519, P-256, X448, P-384, P-521, ffdhe2048, ffdhe3072
+3. **rustls 0.23 + aws-lc-rs 任何配置都不发 DHE/RSA/CBC cipher**
+   → codex 的 reqwest 实际**不使用 rustls**
+4. **但 codex 是 musl 静态二进制，不能 OpenSSL/native-tls**
+   → codex 用了某种我没找到的 TLS 库
+5. **我的 sidecar (musl + rustls 0.23.36 + aws-lc-rs 1.16.2 + http2)**
+   ja3 = `e3530ce29f8567df040df290d7b963b1` **不等于 codex**
+   - 含 X25519MLKEM768 ✅
+   - 但只 10 cipher（TLS 1.3 + ECDHE，无 DHE/RSA/CBC）
+   - supported_groups: 只 4 个（X25519, P-256, P-384, MLKEM）
+
+### ❌ 卡点：远端部署失败
+
+```
+本地: docker image codex-tls-sidecar:0.1.0-musl 12 MB 已建好
+agentsshcli SFTP 30s 硬超时 → 12 MB 文件传不完
+唯一绕开：pscp + root 密码 / 用户自己 scp
+```
+
+### 🔍 下次会话续接清单
+
+```
+1. 解决远端镜像上传（pscp + 密码 / 用户手动 scp / 在远端 git pull build）
+2. docker compose up -d codex-sidecar
+3. 抓包：tcpdump sidecar→sharedchat ja3
+4. 实测 sharedchat 是否字节级严格
+5. 如果 403 codex_access_restricted → 反汇编 codex binary 找真实 TLS 库:
+   strings /usr/lib/node_modules/@openai/codex/.../bin/codex | grep -E "openssl|rustls|boring|wolfssl|nss"
+   objdump -p .../codex | head -30  (看是否 NEEDED 任何 .so)
+6. 找到 TLS 库后再决定继续 vendor 路径 / 切 Path 4 / 止损
+```
+
+### 决定性事实链（如果下次会话失忆）
+
+```
+A. ja3 字节级匹配是难点，不是依赖默认值能解决
+B. codex 的 30 cipher (含 DHE/RSA/CBC) + ffdhe + X448 不像任何主流默认 TLS lib
+C. 怀疑 codex 用 BoringSSL/wolfSSL/某 fork 的 OpenSSL 静态链入 musl
+D. 验证手段：strings /usr/bin/codex (实际路径在 npm 包 vendor 目录)
+E. 当前 sidecar 已能工作（流式透传 / health 检查 / Linux musl docker），
+   只是 ja3 不等同 codex — 适合宽松检测的公益站，不一定能过 sharedchat
+```
+
 ---
 
 ## 设计大纲（详细在 design.md）
