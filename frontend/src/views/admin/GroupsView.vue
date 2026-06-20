@@ -984,6 +984,9 @@
           </div>
         </div>
 
+        <!-- 流量伪装（高级，对外友好型分组用） -->
+        <GroupTrafficShapingCard v-model="createForm" />
+
         <!-- Claude Code 客户端限制（仅 anthropic 平台） -->
         <div v-if="createForm.platform === 'anthropic'" class="border-t pt-4">
           <div class="mb-1.5 flex items-center gap-1">
@@ -2272,6 +2275,9 @@
           </div>
         </div>
 
+        <!-- 流量伪装（高级，对外友好型分组用） -->
+        <GroupTrafficShapingCard v-model="editForm" />
+
         <!-- Claude Code 客户端限制（仅 anthropic 平台） -->
         <div v-if="editForm.platform === 'anthropic'" class="border-t pt-4">
           <div class="mb-1.5 flex items-center gap-1">
@@ -3056,6 +3062,7 @@ import PlatformIcon from "@/components/common/PlatformIcon.vue";
 import Icon from "@/components/icons/Icon.vue";
 import GroupRateMultipliersModal from "@/components/admin/group/GroupRateMultipliersModal.vue";
 import GroupRPMOverridesModal from "@/components/admin/group/GroupRPMOverridesModal.vue";
+import GroupTrafficShapingCard from "@/components/admin/group/GroupTrafficShapingCard.vue";
 import GroupCapacityBadge from "@/components/common/GroupCapacityBadge.vue";
 import { VueDraggable } from "vue-draggable-plus";
 import { createStableObjectKeyResolver } from "@/utils/stableObjectKey";
@@ -3363,6 +3370,11 @@ const createForm = reactive({
   copy_accounts_from_group_ids: [] as number[],
   // 分组级 RPM 限制（每用户每分钟最大请求数；0 = 不限制）
   rpm_limit: 0 as number,
+  // 流量伪装（migration 154，仅对外友好型分组使用）
+  traffic_shaping_enabled: false,
+  sse_early_keepalive_enabled: false,
+  stream_smoothing_enabled: false,
+  silent_retry_5xx_enabled: false,
 });
 
 // 简单账号类型（用于模型路由选择）
@@ -3695,6 +3707,11 @@ const editForm = reactive({
   copy_accounts_from_group_ids: [] as number[],
   // 分组级 RPM 限制（每用户每分钟最大请求数；0 = 不限制）
   rpm_limit: 0 as number,
+  // 流量伪装（migration 154，仅对外友好型分组使用）
+  traffic_shaping_enabled: false,
+  sse_early_keepalive_enabled: false,
+  stream_smoothing_enabled: false,
+  silent_retry_5xx_enabled: false,
 });
 
 type ImagePricingFormState = {
@@ -4074,6 +4091,11 @@ const handleEdit = async (group: AdminGroup) => {
   editForm.mcp_xml_inject = group.mcp_xml_inject ?? true;
   editForm.copy_accounts_from_group_ids = []; // 复制账号字段每次编辑时重置为空
   editForm.rpm_limit = group.rpm_limit ?? 0;
+  // 流量伪装（migration 154）—— 后端字段缺省时默认 false，保持现有行为不变
+  editForm.traffic_shaping_enabled = group.traffic_shaping_enabled ?? false;
+  editForm.sse_early_keepalive_enabled = group.sse_early_keepalive_enabled ?? false;
+  editForm.stream_smoothing_enabled = group.stream_smoothing_enabled ?? false;
+  editForm.silent_retry_5xx_enabled = group.silent_retry_5xx_enabled ?? false;
   resetModelsListState(editModelsListState, group.models_list_config);
   // 加载模型路由规则（异步加载账号名称）
   editModelRoutingRules.value = await convertApiFormatToRoutingRules(

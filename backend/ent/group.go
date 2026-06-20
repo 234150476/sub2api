@@ -89,6 +89,14 @@ type Group struct {
 	ModelsListConfig domain.GroupModelsListConfig `json:"models_list_config,omitempty"`
 	// 分组 RPM 上限，0 表示不限制；设置后接管该分组用户的限流
 	RpmLimit int `json:"rpm_limit,omitempty"`
+	// 流量伪装总开关；关闭时下面所有子开关都不生效
+	TrafficShapingEnabled bool `json:"traffic_shaping_enabled,omitempty"`
+	// 收到上游响应头时立刻向下游吐 SSE 注释心跳，降低聚合站测得的 TTFT；总开关关闭时无效
+	SseEarlyKeepaliveEnabled bool `json:"sse_early_keepalive_enabled,omitempty"`
+	// 用固定节奏平滑流式输出 burst，让聚合站感知到的 TPS 更稳定；总开关关闭时无效
+	StreamSmoothingEnabled bool `json:"stream_smoothing_enabled,omitempty"`
+	// 上游 5xx/网络错误时静默切账号重试，避免聚合站观察到失败；总开关关闭时无效
+	SilentRetry5xxEnabled bool `json:"silent_retry_5xx_enabled,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the GroupQuery when eager-loading is set.
 	Edges        GroupEdges `json:"edges"`
@@ -197,7 +205,7 @@ func (*Group) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case group.FieldModelRouting, group.FieldSupportedModelScopes, group.FieldMessagesDispatchModelConfig, group.FieldModelsListConfig:
 			values[i] = new([]byte)
-		case group.FieldIsExclusive, group.FieldAllowImageGeneration, group.FieldImageRateIndependent, group.FieldClaudeCodeOnly, group.FieldModelRoutingEnabled, group.FieldMcpXMLInject, group.FieldAllowMessagesDispatch, group.FieldRequireOauthOnly, group.FieldRequirePrivacySet:
+		case group.FieldIsExclusive, group.FieldAllowImageGeneration, group.FieldImageRateIndependent, group.FieldClaudeCodeOnly, group.FieldModelRoutingEnabled, group.FieldMcpXMLInject, group.FieldAllowMessagesDispatch, group.FieldRequireOauthOnly, group.FieldRequirePrivacySet, group.FieldTrafficShapingEnabled, group.FieldSseEarlyKeepaliveEnabled, group.FieldStreamSmoothingEnabled, group.FieldSilentRetry5xxEnabled:
 			values[i] = new(sql.NullBool)
 		case group.FieldRateMultiplier, group.FieldDailyLimitUsd, group.FieldWeeklyLimitUsd, group.FieldMonthlyLimitUsd, group.FieldImageRateMultiplier, group.FieldImagePrice1k, group.FieldImagePrice2k, group.FieldImagePrice4k:
 			values[i] = new(sql.NullFloat64)
@@ -456,6 +464,30 @@ func (_m *Group) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.RpmLimit = int(value.Int64)
 			}
+		case group.FieldTrafficShapingEnabled:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field traffic_shaping_enabled", values[i])
+			} else if value.Valid {
+				_m.TrafficShapingEnabled = value.Bool
+			}
+		case group.FieldSseEarlyKeepaliveEnabled:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field sse_early_keepalive_enabled", values[i])
+			} else if value.Valid {
+				_m.SseEarlyKeepaliveEnabled = value.Bool
+			}
+		case group.FieldStreamSmoothingEnabled:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field stream_smoothing_enabled", values[i])
+			} else if value.Valid {
+				_m.StreamSmoothingEnabled = value.Bool
+			}
+		case group.FieldSilentRetry5xxEnabled:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field silent_retry_5xx_enabled", values[i])
+			} else if value.Valid {
+				_m.SilentRetry5xxEnabled = value.Bool
+			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
 		}
@@ -656,6 +688,18 @@ func (_m *Group) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("rpm_limit=")
 	builder.WriteString(fmt.Sprintf("%v", _m.RpmLimit))
+	builder.WriteString(", ")
+	builder.WriteString("traffic_shaping_enabled=")
+	builder.WriteString(fmt.Sprintf("%v", _m.TrafficShapingEnabled))
+	builder.WriteString(", ")
+	builder.WriteString("sse_early_keepalive_enabled=")
+	builder.WriteString(fmt.Sprintf("%v", _m.SseEarlyKeepaliveEnabled))
+	builder.WriteString(", ")
+	builder.WriteString("stream_smoothing_enabled=")
+	builder.WriteString(fmt.Sprintf("%v", _m.StreamSmoothingEnabled))
+	builder.WriteString(", ")
+	builder.WriteString("silent_retry_5xx_enabled=")
+	builder.WriteString(fmt.Sprintf("%v", _m.SilentRetry5xxEnabled))
 	builder.WriteByte(')')
 	return builder.String()
 }

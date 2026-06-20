@@ -13,6 +13,7 @@ import promoAPI from './promo'
 import announcementsAPI from './announcements'
 import settingsAPI from './settings'
 import systemAPI from './system'
+import codexVersionAPI from './codexVersion'
 import subscriptionsAPI from './subscriptions'
 import usageAPI from './usage'
 import geminiAPI from './gemini'
@@ -47,6 +48,7 @@ export const adminAPI = {
   announcements: announcementsAPI,
   settings: settingsAPI,
   system: systemAPI,
+  codexVersion: codexVersionAPI,
   subscriptions: subscriptionsAPI,
   usage: usageAPI,
   gemini: geminiAPI,
@@ -79,6 +81,7 @@ export {
   announcementsAPI,
   settingsAPI,
   systemAPI,
+  codexVersionAPI,
   subscriptionsAPI,
   usageAPI,
   geminiAPI,

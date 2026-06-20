@@ -68,6 +68,15 @@ type Group struct {
 	// 一旦设置即接管该分组用户的限流（覆盖用户级 rpm_limit），可被 user-group rpm_override 进一步覆盖。
 	RPMLimit int
 
+	// 流量伪装行为开关（migration 154）。
+	// 用于把某些分组配置成"对外友好型"——加快第三方聚合站（如 axonhub）感知到的 TTFT、
+	// 平滑流式 burst、对上游 5xx 内部静默重试。仅影响该分组下的请求处理，不影响其他分组。
+	// 总开关关闭时所有子开关都不生效；所有字段默认 false 保证现有行为不变。
+	TrafficShapingEnabled       bool
+	SSEEarlyKeepaliveEnabled    bool
+	StreamSmoothingEnabled      bool
+	SilentRetry5xxEnabled       bool
+
 	CreatedAt time.Time
 	UpdatedAt time.Time
 

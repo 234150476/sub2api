@@ -44,8 +44,9 @@ const (
 	openaiStickySessionTTL = time.Hour // 粘性会话TTL
 	// 与真实 Codex CLI 的 User-Agent 结构对齐：
 	// {originator}/{version} ({OS} {OS_version}; {arch}) {terminal}
-	// 旧值 "codex_cli_rs/0.125.0" 缺少 OS/架构/终端后缀，易被上游指纹识别为非官方客户端。
-	codexCLIUserAgent = "codex_cli_rs/0.125.0 (Ubuntu 22.4.0; x86_64) xterm-256color"
+	// 注意：这是 codex_version_service 未注入时的最终兜底值。
+	// 热路径请优先调用 s.resolveCodexCLIUserAgent() 拿到 service 维护的最新版本。
+	codexCLIUserAgent = "codex_cli_rs/0.141.0 (Ubuntu 24.04.0; x86_64) xterm-256color"
 	// codex_cli_only 拒绝时单个请求头日志长度上限（字符）
 	codexCLIOnlyHeaderValueMaxBytes = 256
 
@@ -59,7 +60,7 @@ const (
 	openAIWSRetryBackoffMaxDefault     = 2 * time.Second
 	openAIWSRetryJitterRatioDefault    = 0.2
 	openAICompactSessionSeedKey        = "openai_compact_session_seed"
-	codexCLIVersion                    = "0.125.0"
+	codexCLIVersion                    = "0.141.0"
 	// Codex 限额快照仅用于后台展示/诊断，不需要每个成功请求都立即落库。
 	openAICodexSnapshotPersistMinInterval = 30 * time.Second
 	// 配额自动暂停时，超过该时长仍未刷新的 used% 快照视为陈旧，不再据此暂停账号。
@@ -356,6 +357,7 @@ type OpenAIGatewayService struct {
 	balanceNotifyService  *BalanceNotifyService
 	settingService        *SettingService
 	userPlatformQuotaRepo UserPlatformQuotaRepository
+	codexVersionSvc       *CodexVersionService
 
 	openaiWSPoolOnce              sync.Once
 	openaiWSStateStoreOnce        sync.Once
@@ -401,6 +403,7 @@ func NewOpenAIGatewayService(
 	balanceNotifyService *BalanceNotifyService,
 	settingService *SettingService,
 	userPlatformQuotaRepo UserPlatformQuotaRepository,
+	codexVersionSvc *CodexVersionService,
 ) *OpenAIGatewayService {
 	svc := &OpenAIGatewayService{
 		accountRepo:         accountRepo,
@@ -433,6 +436,7 @@ func NewOpenAIGatewayService(
 		balanceNotifyService:  balanceNotifyService,
 		settingService:        settingService,
 		userPlatformQuotaRepo: userPlatformQuotaRepo,
+		codexVersionSvc:       codexVersionSvc,
 		responseHeaderFilter:  compileResponseHeaderFilter(cfg),
 		codexSnapshotThrottle: newAccountWriteThrottle(openAICodexSnapshotPersistMinInterval),
 	}
@@ -444,6 +448,28 @@ func NewOpenAIGatewayService(
 	}
 	svc.logOpenAIWSModeBootstrap()
 	return svc
+}
+
+// resolveCodexCLIUserAgent 返回当前要伪装的 Codex CLI User-Agent。
+// codex_version_service 未注入时回退到旧硬编码值（保持向下兼容）。
+func (s *OpenAIGatewayService) resolveCodexCLIUserAgent() string {
+	if s != nil && s.codexVersionSvc != nil {
+		if ua := s.codexVersionSvc.CurrentUserAgent(); ua != "" {
+			return ua
+		}
+	}
+	return codexCLIUserAgent
+}
+
+// resolveCodexCLIVersion 返回当前 Codex CLI 版本号（用于 version header）。
+// codex_version_service 未注入时回退到旧硬编码值。
+func (s *OpenAIGatewayService) resolveCodexCLIVersion() string {
+	if s != nil && s.codexVersionSvc != nil {
+		if v := s.codexVersionSvc.CurrentVersion(); v != "" {
+			return v
+		}
+	}
+	return codexCLIVersion
 }
 
 // ResolveChannelMapping 解析渠道级模型映射（代理到 ChannelService）
@@ -3446,7 +3472,7 @@ func (s *OpenAIGatewayService) buildUpstreamRequestOpenAIPassthrough(
 		if isOpenAIResponsesCompactPath(c) {
 			req.Header.Set("accept", "application/json")
 			if req.Header.Get("version") == "" {
-				req.Header.Set("version", codexCLIVersion)
+				req.Header.Set("version", s.resolveCodexCLIVersion())
 			}
 			if clientSessionID == "" {
 				clientSessionID = resolveOpenAICompactSessionID(c)
@@ -3481,11 +3507,11 @@ func (s *OpenAIGatewayService) buildUpstreamRequestOpenAIPassthrough(
 		req.Header.Set("user-agent", customUA)
 	}
 	if s.cfg != nil && s.cfg.Gateway.ForceCodexCLI {
-		req.Header.Set("user-agent", codexCLIUserAgent)
+		req.Header.Set("user-agent", s.resolveCodexCLIUserAgent())
 	}
 	// OAuth 安全透传：对非 Codex UA 统一兜底，降低被上游风控拦截概率。
 	if account.Type == AccountTypeOAuth && !openai.IsCodexCLIRequest(req.Header.Get("user-agent")) {
-		req.Header.Set("user-agent", codexCLIUserAgent)
+		req.Header.Set("user-agent", s.resolveCodexCLIUserAgent())
 	}
 
 	// 浏览器型 UA 兜底：仅 OAuth（ChatGPT 内部接口）账号生效，若最终 user-agent 仍为浏览器
@@ -3809,6 +3835,19 @@ func (s *OpenAIGatewayService) handleStreamingResponsePassthrough(
 	flusher, ok := w.(http.Flusher)
 	if !ok {
 		return nil, errors.New("streaming not supported")
+	}
+
+	// 流量伪装：当请求所属分组开启 SSE 极速首字节心跳时，立刻向下游写入一个
+	// SSE 注释帧并 flush。SSE 标准要求客户端忽略以 ":" 开头的行（heartbeat），
+	// 因此对正常 SDK（OpenAI / Anthropic / Codex CLI）零影响；但第三方聚合站
+	// （如 axonhub）会把这第一次写入计算为 first-byte，从而把测得的 TTFT 从
+	// 真实上游耗时（数百 ms ~ 数秒）压到响应头到达后的 ~毫秒级。
+	// 注意：仅当 group.traffic_shaping_enabled=true 且 sse_early_keepalive_enabled=true
+	// 才生效，对未开启该功能的分组完全不影响。
+	if shaping := resolveGroupTrafficShaping(apiKeyGroup(getAPIKeyFromContext(c))); shaping.SSEEarlyKeepalive {
+		if _, err := w.Write([]byte(": ping\n\n")); err == nil {
+			flusher.Flush()
+		}
 	}
 
 	usage := &OpenAIUsage{}
@@ -4216,7 +4255,7 @@ func (s *OpenAIGatewayService) buildUpstreamRequest(ctx context.Context, c *gin.
 		if isOpenAIResponsesCompactPath(c) {
 			req.Header.Set("accept", "application/json")
 			if req.Header.Get("version") == "" {
-				req.Header.Set("version", codexCLIVersion)
+				req.Header.Set("version", s.resolveCodexCLIVersion())
 			}
 			compactSession := resolveOpenAICompactSessionID(c)
 			req.Header.Set("session_id", isolateOpenAISessionID(apiKeyID, compactSession))
@@ -4241,7 +4280,7 @@ func (s *OpenAIGatewayService) buildUpstreamRequest(ctx context.Context, c *gin.
 	// 若开启 ForceCodexCLI，则强制将上游 User-Agent 伪装为 Codex CLI。
 	// 用于网关未透传/改写 User-Agent 时，仍能命中 Codex 侧识别逻辑。
 	if s.cfg != nil && s.cfg.Gateway.ForceCodexCLI {
-		req.Header.Set("user-agent", codexCLIUserAgent)
+		req.Header.Set("user-agent", s.resolveCodexCLIUserAgent())
 	}
 
 	// 浏览器型 UA 兜底：仅 OAuth（ChatGPT 内部接口）账号生效，若最终 user-agent 仍为浏览器

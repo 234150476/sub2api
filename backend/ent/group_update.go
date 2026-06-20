@@ -651,6 +651,62 @@ func (_u *GroupUpdate) AddRpmLimit(v int) *GroupUpdate {
 	return _u
 }
 
+// SetTrafficShapingEnabled sets the "traffic_shaping_enabled" field.
+func (_u *GroupUpdate) SetTrafficShapingEnabled(v bool) *GroupUpdate {
+	_u.mutation.SetTrafficShapingEnabled(v)
+	return _u
+}
+
+// SetNillableTrafficShapingEnabled sets the "traffic_shaping_enabled" field if the given value is not nil.
+func (_u *GroupUpdate) SetNillableTrafficShapingEnabled(v *bool) *GroupUpdate {
+	if v != nil {
+		_u.SetTrafficShapingEnabled(*v)
+	}
+	return _u
+}
+
+// SetSseEarlyKeepaliveEnabled sets the "sse_early_keepalive_enabled" field.
+func (_u *GroupUpdate) SetSseEarlyKeepaliveEnabled(v bool) *GroupUpdate {
+	_u.mutation.SetSseEarlyKeepaliveEnabled(v)
+	return _u
+}
+
+// SetNillableSseEarlyKeepaliveEnabled sets the "sse_early_keepalive_enabled" field if the given value is not nil.
+func (_u *GroupUpdate) SetNillableSseEarlyKeepaliveEnabled(v *bool) *GroupUpdate {
+	if v != nil {
+		_u.SetSseEarlyKeepaliveEnabled(*v)
+	}
+	return _u
+}
+
+// SetStreamSmoothingEnabled sets the "stream_smoothing_enabled" field.
+func (_u *GroupUpdate) SetStreamSmoothingEnabled(v bool) *GroupUpdate {
+	_u.mutation.SetStreamSmoothingEnabled(v)
+	return _u
+}
+
+// SetNillableStreamSmoothingEnabled sets the "stream_smoothing_enabled" field if the given value is not nil.
+func (_u *GroupUpdate) SetNillableStreamSmoothingEnabled(v *bool) *GroupUpdate {
+	if v != nil {
+		_u.SetStreamSmoothingEnabled(*v)
+	}
+	return _u
+}
+
+// SetSilentRetry5xxEnabled sets the "silent_retry_5xx_enabled" field.
+func (_u *GroupUpdate) SetSilentRetry5xxEnabled(v bool) *GroupUpdate {
+	_u.mutation.SetSilentRetry5xxEnabled(v)
+	return _u
+}
+
+// SetNillableSilentRetry5xxEnabled sets the "silent_retry_5xx_enabled" field if the given value is not nil.
+func (_u *GroupUpdate) SetNillableSilentRetry5xxEnabled(v *bool) *GroupUpdate {
+	if v != nil {
+		_u.SetSilentRetry5xxEnabled(*v)
+	}
+	return _u
+}
+
 // AddAPIKeyIDs adds the "api_keys" edge to the APIKey entity by IDs.
 func (_u *GroupUpdate) AddAPIKeyIDs(ids ...int64) *GroupUpdate {
 	_u.mutation.AddAPIKeyIDs(ids...)
@@ -1134,6 +1190,18 @@ func (_u *GroupUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.AddedRpmLimit(); ok {
 		_spec.AddField(group.FieldRpmLimit, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.TrafficShapingEnabled(); ok {
+		_spec.SetField(group.FieldTrafficShapingEnabled, field.TypeBool, value)
+	}
+	if value, ok := _u.mutation.SseEarlyKeepaliveEnabled(); ok {
+		_spec.SetField(group.FieldSseEarlyKeepaliveEnabled, field.TypeBool, value)
+	}
+	if value, ok := _u.mutation.StreamSmoothingEnabled(); ok {
+		_spec.SetField(group.FieldStreamSmoothingEnabled, field.TypeBool, value)
+	}
+	if value, ok := _u.mutation.SilentRetry5xxEnabled(); ok {
+		_spec.SetField(group.FieldSilentRetry5xxEnabled, field.TypeBool, value)
 	}
 	if _u.mutation.APIKeysCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -2064,6 +2132,62 @@ func (_u *GroupUpdateOne) AddRpmLimit(v int) *GroupUpdateOne {
 	return _u
 }
 
+// SetTrafficShapingEnabled sets the "traffic_shaping_enabled" field.
+func (_u *GroupUpdateOne) SetTrafficShapingEnabled(v bool) *GroupUpdateOne {
+	_u.mutation.SetTrafficShapingEnabled(v)
+	return _u
+}
+
+// SetNillableTrafficShapingEnabled sets the "traffic_shaping_enabled" field if the given value is not nil.
+func (_u *GroupUpdateOne) SetNillableTrafficShapingEnabled(v *bool) *GroupUpdateOne {
+	if v != nil {
+		_u.SetTrafficShapingEnabled(*v)
+	}
+	return _u
+}
+
+// SetSseEarlyKeepaliveEnabled sets the "sse_early_keepalive_enabled" field.
+func (_u *GroupUpdateOne) SetSseEarlyKeepaliveEnabled(v bool) *GroupUpdateOne {
+	_u.mutation.SetSseEarlyKeepaliveEnabled(v)
+	return _u
+}
+
+// SetNillableSseEarlyKeepaliveEnabled sets the "sse_early_keepalive_enabled" field if the given value is not nil.
+func (_u *GroupUpdateOne) SetNillableSseEarlyKeepaliveEnabled(v *bool) *GroupUpdateOne {
+	if v != nil {
+		_u.SetSseEarlyKeepaliveEnabled(*v)
+	}
+	return _u
+}
+
+// SetStreamSmoothingEnabled sets the "stream_smoothing_enabled" field.
+func (_u *GroupUpdateOne) SetStreamSmoothingEnabled(v bool) *GroupUpdateOne {
+	_u.mutation.SetStreamSmoothingEnabled(v)
+	return _u
+}
+
+// SetNillableStreamSmoothingEnabled sets the "stream_smoothing_enabled" field if the given value is not nil.
+func (_u *GroupUpdateOne) SetNillableStreamSmoothingEnabled(v *bool) *GroupUpdateOne {
+	if v != nil {
+		_u.SetStreamSmoothingEnabled(*v)
+	}
+	return _u
+}
+
+// SetSilentRetry5xxEnabled sets the "silent_retry_5xx_enabled" field.
+func (_u *GroupUpdateOne) SetSilentRetry5xxEnabled(v bool) *GroupUpdateOne {
+	_u.mutation.SetSilentRetry5xxEnabled(v)
+	return _u
+}
+
+// SetNillableSilentRetry5xxEnabled sets the "silent_retry_5xx_enabled" field if the given value is not nil.
+func (_u *GroupUpdateOne) SetNillableSilentRetry5xxEnabled(v *bool) *GroupUpdateOne {
+	if v != nil {
+		_u.SetSilentRetry5xxEnabled(*v)
+	}
+	return _u
+}
+
 // AddAPIKeyIDs adds the "api_keys" edge to the APIKey entity by IDs.
 func (_u *GroupUpdateOne) AddAPIKeyIDs(ids ...int64) *GroupUpdateOne {
 	_u.mutation.AddAPIKeyIDs(ids...)
@@ -2577,6 +2701,18 @@ func (_u *GroupUpdateOne) sqlSave(ctx context.Context) (_node *Group, err error)
 	}
 	if value, ok := _u.mutation.AddedRpmLimit(); ok {
 		_spec.AddField(group.FieldRpmLimit, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.TrafficShapingEnabled(); ok {
+		_spec.SetField(group.FieldTrafficShapingEnabled, field.TypeBool, value)
+	}
+	if value, ok := _u.mutation.SseEarlyKeepaliveEnabled(); ok {
+		_spec.SetField(group.FieldSseEarlyKeepaliveEnabled, field.TypeBool, value)
+	}
+	if value, ok := _u.mutation.StreamSmoothingEnabled(); ok {
+		_spec.SetField(group.FieldStreamSmoothingEnabled, field.TypeBool, value)
+	}
+	if value, ok := _u.mutation.SilentRetry5xxEnabled(); ok {
+		_spec.SetField(group.FieldSilentRetry5xxEnabled, field.TypeBool, value)
 	}
 	if _u.mutation.APIKeysCleared() {
 		edge := &sqlgraph.EdgeSpec{

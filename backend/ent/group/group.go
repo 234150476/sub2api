@@ -86,6 +86,14 @@ const (
 	FieldModelsListConfig = "models_list_config"
 	// FieldRpmLimit holds the string denoting the rpm_limit field in the database.
 	FieldRpmLimit = "rpm_limit"
+	// FieldTrafficShapingEnabled holds the string denoting the traffic_shaping_enabled field in the database.
+	FieldTrafficShapingEnabled = "traffic_shaping_enabled"
+	// FieldSseEarlyKeepaliveEnabled holds the string denoting the sse_early_keepalive_enabled field in the database.
+	FieldSseEarlyKeepaliveEnabled = "sse_early_keepalive_enabled"
+	// FieldStreamSmoothingEnabled holds the string denoting the stream_smoothing_enabled field in the database.
+	FieldStreamSmoothingEnabled = "stream_smoothing_enabled"
+	// FieldSilentRetry5xxEnabled holds the string denoting the silent_retry_5xx_enabled field in the database.
+	FieldSilentRetry5xxEnabled = "silent_retry_5xx_enabled"
 	// EdgeAPIKeys holds the string denoting the api_keys edge name in mutations.
 	EdgeAPIKeys = "api_keys"
 	// EdgeRedeemCodes holds the string denoting the redeem_codes edge name in mutations.
@@ -196,6 +204,10 @@ var Columns = []string{
 	FieldMessagesDispatchModelConfig,
 	FieldModelsListConfig,
 	FieldRpmLimit,
+	FieldTrafficShapingEnabled,
+	FieldSseEarlyKeepaliveEnabled,
+	FieldStreamSmoothingEnabled,
+	FieldSilentRetry5xxEnabled,
 }
 
 var (
@@ -283,6 +295,14 @@ var (
 	DefaultModelsListConfig domain.GroupModelsListConfig
 	// DefaultRpmLimit holds the default value on creation for the "rpm_limit" field.
 	DefaultRpmLimit int
+	// DefaultTrafficShapingEnabled holds the default value on creation for the "traffic_shaping_enabled" field.
+	DefaultTrafficShapingEnabled bool
+	// DefaultSseEarlyKeepaliveEnabled holds the default value on creation for the "sse_early_keepalive_enabled" field.
+	DefaultSseEarlyKeepaliveEnabled bool
+	// DefaultStreamSmoothingEnabled holds the default value on creation for the "stream_smoothing_enabled" field.
+	DefaultStreamSmoothingEnabled bool
+	// DefaultSilentRetry5xxEnabled holds the default value on creation for the "silent_retry_5xx_enabled" field.
+	DefaultSilentRetry5xxEnabled bool
 )
 
 // OrderOption defines the ordering options for the Group queries.
@@ -446,6 +466,26 @@ func ByDefaultMappedModel(opts ...sql.OrderTermOption) OrderOption {
 // ByRpmLimit orders the results by the rpm_limit field.
 func ByRpmLimit(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldRpmLimit, opts...).ToFunc()
+}
+
+// ByTrafficShapingEnabled orders the results by the traffic_shaping_enabled field.
+func ByTrafficShapingEnabled(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldTrafficShapingEnabled, opts...).ToFunc()
+}
+
+// BySseEarlyKeepaliveEnabled orders the results by the sse_early_keepalive_enabled field.
+func BySseEarlyKeepaliveEnabled(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSseEarlyKeepaliveEnabled, opts...).ToFunc()
+}
+
+// ByStreamSmoothingEnabled orders the results by the stream_smoothing_enabled field.
+func ByStreamSmoothingEnabled(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldStreamSmoothingEnabled, opts...).ToFunc()
+}
+
+// BySilentRetry5xxEnabled orders the results by the silent_retry_5xx_enabled field.
+func BySilentRetry5xxEnabled(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSilentRetry5xxEnabled, opts...).ToFunc()
 }
 
 // ByAPIKeysCount orders the results by api_keys count.

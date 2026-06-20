@@ -210,6 +210,26 @@ func RpmLimit(v int) predicate.Group {
 	return predicate.Group(sql.FieldEQ(FieldRpmLimit, v))
 }
 
+// TrafficShapingEnabled applies equality check predicate on the "traffic_shaping_enabled" field. It's identical to TrafficShapingEnabledEQ.
+func TrafficShapingEnabled(v bool) predicate.Group {
+	return predicate.Group(sql.FieldEQ(FieldTrafficShapingEnabled, v))
+}
+
+// SseEarlyKeepaliveEnabled applies equality check predicate on the "sse_early_keepalive_enabled" field. It's identical to SseEarlyKeepaliveEnabledEQ.
+func SseEarlyKeepaliveEnabled(v bool) predicate.Group {
+	return predicate.Group(sql.FieldEQ(FieldSseEarlyKeepaliveEnabled, v))
+}
+
+// StreamSmoothingEnabled applies equality check predicate on the "stream_smoothing_enabled" field. It's identical to StreamSmoothingEnabledEQ.
+func StreamSmoothingEnabled(v bool) predicate.Group {
+	return predicate.Group(sql.FieldEQ(FieldStreamSmoothingEnabled, v))
+}
+
+// SilentRetry5xxEnabled applies equality check predicate on the "silent_retry_5xx_enabled" field. It's identical to SilentRetry5xxEnabledEQ.
+func SilentRetry5xxEnabled(v bool) predicate.Group {
+	return predicate.Group(sql.FieldEQ(FieldSilentRetry5xxEnabled, v))
+}
+
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.Group {
 	return predicate.Group(sql.FieldEQ(FieldCreatedAt, v))
@@ -1438,6 +1458,46 @@ func RpmLimitLT(v int) predicate.Group {
 // RpmLimitLTE applies the LTE predicate on the "rpm_limit" field.
 func RpmLimitLTE(v int) predicate.Group {
 	return predicate.Group(sql.FieldLTE(FieldRpmLimit, v))
+}
+
+// TrafficShapingEnabledEQ applies the EQ predicate on the "traffic_shaping_enabled" field.
+func TrafficShapingEnabledEQ(v bool) predicate.Group {
+	return predicate.Group(sql.FieldEQ(FieldTrafficShapingEnabled, v))
+}
+
+// TrafficShapingEnabledNEQ applies the NEQ predicate on the "traffic_shaping_enabled" field.
+func TrafficShapingEnabledNEQ(v bool) predicate.Group {
+	return predicate.Group(sql.FieldNEQ(FieldTrafficShapingEnabled, v))
+}
+
+// SseEarlyKeepaliveEnabledEQ applies the EQ predicate on the "sse_early_keepalive_enabled" field.
+func SseEarlyKeepaliveEnabledEQ(v bool) predicate.Group {
+	return predicate.Group(sql.FieldEQ(FieldSseEarlyKeepaliveEnabled, v))
+}
+
+// SseEarlyKeepaliveEnabledNEQ applies the NEQ predicate on the "sse_early_keepalive_enabled" field.
+func SseEarlyKeepaliveEnabledNEQ(v bool) predicate.Group {
+	return predicate.Group(sql.FieldNEQ(FieldSseEarlyKeepaliveEnabled, v))
+}
+
+// StreamSmoothingEnabledEQ applies the EQ predicate on the "stream_smoothing_enabled" field.
+func StreamSmoothingEnabledEQ(v bool) predicate.Group {
+	return predicate.Group(sql.FieldEQ(FieldStreamSmoothingEnabled, v))
+}
+
+// StreamSmoothingEnabledNEQ applies the NEQ predicate on the "stream_smoothing_enabled" field.
+func StreamSmoothingEnabledNEQ(v bool) predicate.Group {
+	return predicate.Group(sql.FieldNEQ(FieldStreamSmoothingEnabled, v))
+}
+
+// SilentRetry5xxEnabledEQ applies the EQ predicate on the "silent_retry_5xx_enabled" field.
+func SilentRetry5xxEnabledEQ(v bool) predicate.Group {
+	return predicate.Group(sql.FieldEQ(FieldSilentRetry5xxEnabled, v))
+}
+
+// SilentRetry5xxEnabledNEQ applies the NEQ predicate on the "silent_retry_5xx_enabled" field.
+func SilentRetry5xxEnabledNEQ(v bool) predicate.Group {
+	return predicate.Group(sql.FieldNEQ(FieldSilentRetry5xxEnabled, v))
 }
 
 // HasAPIKeys applies the HasEdge predicate on the "api_keys" edge.

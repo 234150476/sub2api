@@ -673,6 +673,10 @@ var (
 		{Name: "messages_dispatch_model_config", Type: field.TypeJSON, SchemaType: map[string]string{"postgres": "jsonb"}},
 		{Name: "models_list_config", Type: field.TypeJSON, SchemaType: map[string]string{"postgres": "jsonb"}},
 		{Name: "rpm_limit", Type: field.TypeInt, Default: 0},
+		{Name: "traffic_shaping_enabled", Type: field.TypeBool, Default: false},
+		{Name: "sse_early_keepalive_enabled", Type: field.TypeBool, Default: false},
+		{Name: "stream_smoothing_enabled", Type: field.TypeBool, Default: false},
+		{Name: "silent_retry_5xx_enabled", Type: field.TypeBool, Default: false},
 	}
 	// GroupsTable holds the schema information for the "groups" table.
 	GroupsTable = &schema.Table{

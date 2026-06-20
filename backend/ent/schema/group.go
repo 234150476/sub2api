@@ -164,6 +164,23 @@ func (Group) Fields() []ent.Field {
 		field.Int("rpm_limit").
 			Default(0).
 			Comment("分组 RPM 上限，0 表示不限制；设置后接管该分组用户的限流"),
+
+		// 流量伪装行为开关（added by migration 154）
+		// 用于把某些分组配置成"对外友好型"——加快第三方聚合站（如 axonhub）感知到的 TTFT、
+		// 平滑流式 burst、对上游 5xx 内部静默重试。仅影响该分组下的请求处理，不影响其他分组。
+		// 总开关关闭时下面所有子开关都不生效；所有字段默认 false 保证现有行为不变。
+		field.Bool("traffic_shaping_enabled").
+			Default(false).
+			Comment("流量伪装总开关；关闭时下面所有子开关都不生效"),
+		field.Bool("sse_early_keepalive_enabled").
+			Default(false).
+			Comment("收到上游响应头时立刻向下游吐 SSE 注释心跳，降低聚合站测得的 TTFT；总开关关闭时无效"),
+		field.Bool("stream_smoothing_enabled").
+			Default(false).
+			Comment("用固定节奏平滑流式输出 burst，让聚合站感知到的 TPS 更稳定；总开关关闭时无效"),
+		field.Bool("silent_retry_5xx_enabled").
+			Default(false).
+			Comment("上游 5xx/网络错误时静默切账号重试，避免聚合站观察到失败；总开关关闭时无效"),
 	}
 }
 

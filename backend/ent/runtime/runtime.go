@@ -884,6 +884,22 @@ func init() {
 	groupDescRpmLimit := groupFields[31].Descriptor()
 	// group.DefaultRpmLimit holds the default value on creation for the rpm_limit field.
 	group.DefaultRpmLimit = groupDescRpmLimit.Default.(int)
+	// groupDescTrafficShapingEnabled is the schema descriptor for traffic_shaping_enabled field.
+	groupDescTrafficShapingEnabled := groupFields[32].Descriptor()
+	// group.DefaultTrafficShapingEnabled holds the default value on creation for the traffic_shaping_enabled field.
+	group.DefaultTrafficShapingEnabled = groupDescTrafficShapingEnabled.Default.(bool)
+	// groupDescSseEarlyKeepaliveEnabled is the schema descriptor for sse_early_keepalive_enabled field.
+	groupDescSseEarlyKeepaliveEnabled := groupFields[33].Descriptor()
+	// group.DefaultSseEarlyKeepaliveEnabled holds the default value on creation for the sse_early_keepalive_enabled field.
+	group.DefaultSseEarlyKeepaliveEnabled = groupDescSseEarlyKeepaliveEnabled.Default.(bool)
+	// groupDescStreamSmoothingEnabled is the schema descriptor for stream_smoothing_enabled field.
+	groupDescStreamSmoothingEnabled := groupFields[34].Descriptor()
+	// group.DefaultStreamSmoothingEnabled holds the default value on creation for the stream_smoothing_enabled field.
+	group.DefaultStreamSmoothingEnabled = groupDescStreamSmoothingEnabled.Default.(bool)
+	// groupDescSilentRetry5xxEnabled is the schema descriptor for silent_retry_5xx_enabled field.
+	groupDescSilentRetry5xxEnabled := groupFields[35].Descriptor()
+	// group.DefaultSilentRetry5xxEnabled holds the default value on creation for the silent_retry_5xx_enabled field.
+	group.DefaultSilentRetry5xxEnabled = groupDescSilentRetry5xxEnabled.Default.(bool)
 	idempotencyrecordMixin := schema.IdempotencyRecord{}.Mixin()
 	idempotencyrecordMixinFields0 := idempotencyrecordMixin[0].Fields()
 	_ = idempotencyrecordMixinFields0

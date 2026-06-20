@@ -495,6 +495,62 @@ func (_c *GroupCreate) SetNillableRpmLimit(v *int) *GroupCreate {
 	return _c
 }
 
+// SetTrafficShapingEnabled sets the "traffic_shaping_enabled" field.
+func (_c *GroupCreate) SetTrafficShapingEnabled(v bool) *GroupCreate {
+	_c.mutation.SetTrafficShapingEnabled(v)
+	return _c
+}
+
+// SetNillableTrafficShapingEnabled sets the "traffic_shaping_enabled" field if the given value is not nil.
+func (_c *GroupCreate) SetNillableTrafficShapingEnabled(v *bool) *GroupCreate {
+	if v != nil {
+		_c.SetTrafficShapingEnabled(*v)
+	}
+	return _c
+}
+
+// SetSseEarlyKeepaliveEnabled sets the "sse_early_keepalive_enabled" field.
+func (_c *GroupCreate) SetSseEarlyKeepaliveEnabled(v bool) *GroupCreate {
+	_c.mutation.SetSseEarlyKeepaliveEnabled(v)
+	return _c
+}
+
+// SetNillableSseEarlyKeepaliveEnabled sets the "sse_early_keepalive_enabled" field if the given value is not nil.
+func (_c *GroupCreate) SetNillableSseEarlyKeepaliveEnabled(v *bool) *GroupCreate {
+	if v != nil {
+		_c.SetSseEarlyKeepaliveEnabled(*v)
+	}
+	return _c
+}
+
+// SetStreamSmoothingEnabled sets the "stream_smoothing_enabled" field.
+func (_c *GroupCreate) SetStreamSmoothingEnabled(v bool) *GroupCreate {
+	_c.mutation.SetStreamSmoothingEnabled(v)
+	return _c
+}
+
+// SetNillableStreamSmoothingEnabled sets the "stream_smoothing_enabled" field if the given value is not nil.
+func (_c *GroupCreate) SetNillableStreamSmoothingEnabled(v *bool) *GroupCreate {
+	if v != nil {
+		_c.SetStreamSmoothingEnabled(*v)
+	}
+	return _c
+}
+
+// SetSilentRetry5xxEnabled sets the "silent_retry_5xx_enabled" field.
+func (_c *GroupCreate) SetSilentRetry5xxEnabled(v bool) *GroupCreate {
+	_c.mutation.SetSilentRetry5xxEnabled(v)
+	return _c
+}
+
+// SetNillableSilentRetry5xxEnabled sets the "silent_retry_5xx_enabled" field if the given value is not nil.
+func (_c *GroupCreate) SetNillableSilentRetry5xxEnabled(v *bool) *GroupCreate {
+	if v != nil {
+		_c.SetSilentRetry5xxEnabled(*v)
+	}
+	return _c
+}
+
 // AddAPIKeyIDs adds the "api_keys" edge to the APIKey entity by IDs.
 func (_c *GroupCreate) AddAPIKeyIDs(ids ...int64) *GroupCreate {
 	_c.mutation.AddAPIKeyIDs(ids...)
@@ -720,6 +776,22 @@ func (_c *GroupCreate) defaults() error {
 		v := group.DefaultRpmLimit
 		_c.mutation.SetRpmLimit(v)
 	}
+	if _, ok := _c.mutation.TrafficShapingEnabled(); !ok {
+		v := group.DefaultTrafficShapingEnabled
+		_c.mutation.SetTrafficShapingEnabled(v)
+	}
+	if _, ok := _c.mutation.SseEarlyKeepaliveEnabled(); !ok {
+		v := group.DefaultSseEarlyKeepaliveEnabled
+		_c.mutation.SetSseEarlyKeepaliveEnabled(v)
+	}
+	if _, ok := _c.mutation.StreamSmoothingEnabled(); !ok {
+		v := group.DefaultStreamSmoothingEnabled
+		_c.mutation.SetStreamSmoothingEnabled(v)
+	}
+	if _, ok := _c.mutation.SilentRetry5xxEnabled(); !ok {
+		v := group.DefaultSilentRetry5xxEnabled
+		_c.mutation.SetSilentRetry5xxEnabled(v)
+	}
 	return nil
 }
 
@@ -821,6 +893,18 @@ func (_c *GroupCreate) check() error {
 	}
 	if _, ok := _c.mutation.RpmLimit(); !ok {
 		return &ValidationError{Name: "rpm_limit", err: errors.New(`ent: missing required field "Group.rpm_limit"`)}
+	}
+	if _, ok := _c.mutation.TrafficShapingEnabled(); !ok {
+		return &ValidationError{Name: "traffic_shaping_enabled", err: errors.New(`ent: missing required field "Group.traffic_shaping_enabled"`)}
+	}
+	if _, ok := _c.mutation.SseEarlyKeepaliveEnabled(); !ok {
+		return &ValidationError{Name: "sse_early_keepalive_enabled", err: errors.New(`ent: missing required field "Group.sse_early_keepalive_enabled"`)}
+	}
+	if _, ok := _c.mutation.StreamSmoothingEnabled(); !ok {
+		return &ValidationError{Name: "stream_smoothing_enabled", err: errors.New(`ent: missing required field "Group.stream_smoothing_enabled"`)}
+	}
+	if _, ok := _c.mutation.SilentRetry5xxEnabled(); !ok {
+		return &ValidationError{Name: "silent_retry_5xx_enabled", err: errors.New(`ent: missing required field "Group.silent_retry_5xx_enabled"`)}
 	}
 	return nil
 }
@@ -988,6 +1072,22 @@ func (_c *GroupCreate) createSpec() (*Group, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.RpmLimit(); ok {
 		_spec.SetField(group.FieldRpmLimit, field.TypeInt, value)
 		_node.RpmLimit = value
+	}
+	if value, ok := _c.mutation.TrafficShapingEnabled(); ok {
+		_spec.SetField(group.FieldTrafficShapingEnabled, field.TypeBool, value)
+		_node.TrafficShapingEnabled = value
+	}
+	if value, ok := _c.mutation.SseEarlyKeepaliveEnabled(); ok {
+		_spec.SetField(group.FieldSseEarlyKeepaliveEnabled, field.TypeBool, value)
+		_node.SseEarlyKeepaliveEnabled = value
+	}
+	if value, ok := _c.mutation.StreamSmoothingEnabled(); ok {
+		_spec.SetField(group.FieldStreamSmoothingEnabled, field.TypeBool, value)
+		_node.StreamSmoothingEnabled = value
+	}
+	if value, ok := _c.mutation.SilentRetry5xxEnabled(); ok {
+		_spec.SetField(group.FieldSilentRetry5xxEnabled, field.TypeBool, value)
+		_node.SilentRetry5xxEnabled = value
 	}
 	if nodes := _c.mutation.APIKeysIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -1697,6 +1797,54 @@ func (u *GroupUpsert) AddRpmLimit(v int) *GroupUpsert {
 	return u
 }
 
+// SetTrafficShapingEnabled sets the "traffic_shaping_enabled" field.
+func (u *GroupUpsert) SetTrafficShapingEnabled(v bool) *GroupUpsert {
+	u.Set(group.FieldTrafficShapingEnabled, v)
+	return u
+}
+
+// UpdateTrafficShapingEnabled sets the "traffic_shaping_enabled" field to the value that was provided on create.
+func (u *GroupUpsert) UpdateTrafficShapingEnabled() *GroupUpsert {
+	u.SetExcluded(group.FieldTrafficShapingEnabled)
+	return u
+}
+
+// SetSseEarlyKeepaliveEnabled sets the "sse_early_keepalive_enabled" field.
+func (u *GroupUpsert) SetSseEarlyKeepaliveEnabled(v bool) *GroupUpsert {
+	u.Set(group.FieldSseEarlyKeepaliveEnabled, v)
+	return u
+}
+
+// UpdateSseEarlyKeepaliveEnabled sets the "sse_early_keepalive_enabled" field to the value that was provided on create.
+func (u *GroupUpsert) UpdateSseEarlyKeepaliveEnabled() *GroupUpsert {
+	u.SetExcluded(group.FieldSseEarlyKeepaliveEnabled)
+	return u
+}
+
+// SetStreamSmoothingEnabled sets the "stream_smoothing_enabled" field.
+func (u *GroupUpsert) SetStreamSmoothingEnabled(v bool) *GroupUpsert {
+	u.Set(group.FieldStreamSmoothingEnabled, v)
+	return u
+}
+
+// UpdateStreamSmoothingEnabled sets the "stream_smoothing_enabled" field to the value that was provided on create.
+func (u *GroupUpsert) UpdateStreamSmoothingEnabled() *GroupUpsert {
+	u.SetExcluded(group.FieldStreamSmoothingEnabled)
+	return u
+}
+
+// SetSilentRetry5xxEnabled sets the "silent_retry_5xx_enabled" field.
+func (u *GroupUpsert) SetSilentRetry5xxEnabled(v bool) *GroupUpsert {
+	u.Set(group.FieldSilentRetry5xxEnabled, v)
+	return u
+}
+
+// UpdateSilentRetry5xxEnabled sets the "silent_retry_5xx_enabled" field to the value that was provided on create.
+func (u *GroupUpsert) UpdateSilentRetry5xxEnabled() *GroupUpsert {
+	u.SetExcluded(group.FieldSilentRetry5xxEnabled)
+	return u
+}
+
 // UpdateNewValues updates the mutable fields using the new values that were set on create.
 // Using this option is equivalent to using:
 //
@@ -2383,6 +2531,62 @@ func (u *GroupUpsertOne) AddRpmLimit(v int) *GroupUpsertOne {
 func (u *GroupUpsertOne) UpdateRpmLimit() *GroupUpsertOne {
 	return u.Update(func(s *GroupUpsert) {
 		s.UpdateRpmLimit()
+	})
+}
+
+// SetTrafficShapingEnabled sets the "traffic_shaping_enabled" field.
+func (u *GroupUpsertOne) SetTrafficShapingEnabled(v bool) *GroupUpsertOne {
+	return u.Update(func(s *GroupUpsert) {
+		s.SetTrafficShapingEnabled(v)
+	})
+}
+
+// UpdateTrafficShapingEnabled sets the "traffic_shaping_enabled" field to the value that was provided on create.
+func (u *GroupUpsertOne) UpdateTrafficShapingEnabled() *GroupUpsertOne {
+	return u.Update(func(s *GroupUpsert) {
+		s.UpdateTrafficShapingEnabled()
+	})
+}
+
+// SetSseEarlyKeepaliveEnabled sets the "sse_early_keepalive_enabled" field.
+func (u *GroupUpsertOne) SetSseEarlyKeepaliveEnabled(v bool) *GroupUpsertOne {
+	return u.Update(func(s *GroupUpsert) {
+		s.SetSseEarlyKeepaliveEnabled(v)
+	})
+}
+
+// UpdateSseEarlyKeepaliveEnabled sets the "sse_early_keepalive_enabled" field to the value that was provided on create.
+func (u *GroupUpsertOne) UpdateSseEarlyKeepaliveEnabled() *GroupUpsertOne {
+	return u.Update(func(s *GroupUpsert) {
+		s.UpdateSseEarlyKeepaliveEnabled()
+	})
+}
+
+// SetStreamSmoothingEnabled sets the "stream_smoothing_enabled" field.
+func (u *GroupUpsertOne) SetStreamSmoothingEnabled(v bool) *GroupUpsertOne {
+	return u.Update(func(s *GroupUpsert) {
+		s.SetStreamSmoothingEnabled(v)
+	})
+}
+
+// UpdateStreamSmoothingEnabled sets the "stream_smoothing_enabled" field to the value that was provided on create.
+func (u *GroupUpsertOne) UpdateStreamSmoothingEnabled() *GroupUpsertOne {
+	return u.Update(func(s *GroupUpsert) {
+		s.UpdateStreamSmoothingEnabled()
+	})
+}
+
+// SetSilentRetry5xxEnabled sets the "silent_retry_5xx_enabled" field.
+func (u *GroupUpsertOne) SetSilentRetry5xxEnabled(v bool) *GroupUpsertOne {
+	return u.Update(func(s *GroupUpsert) {
+		s.SetSilentRetry5xxEnabled(v)
+	})
+}
+
+// UpdateSilentRetry5xxEnabled sets the "silent_retry_5xx_enabled" field to the value that was provided on create.
+func (u *GroupUpsertOne) UpdateSilentRetry5xxEnabled() *GroupUpsertOne {
+	return u.Update(func(s *GroupUpsert) {
+		s.UpdateSilentRetry5xxEnabled()
 	})
 }
 
@@ -3238,6 +3442,62 @@ func (u *GroupUpsertBulk) AddRpmLimit(v int) *GroupUpsertBulk {
 func (u *GroupUpsertBulk) UpdateRpmLimit() *GroupUpsertBulk {
 	return u.Update(func(s *GroupUpsert) {
 		s.UpdateRpmLimit()
+	})
+}
+
+// SetTrafficShapingEnabled sets the "traffic_shaping_enabled" field.
+func (u *GroupUpsertBulk) SetTrafficShapingEnabled(v bool) *GroupUpsertBulk {
+	return u.Update(func(s *GroupUpsert) {
+		s.SetTrafficShapingEnabled(v)
+	})
+}
+
+// UpdateTrafficShapingEnabled sets the "traffic_shaping_enabled" field to the value that was provided on create.
+func (u *GroupUpsertBulk) UpdateTrafficShapingEnabled() *GroupUpsertBulk {
+	return u.Update(func(s *GroupUpsert) {
+		s.UpdateTrafficShapingEnabled()
+	})
+}
+
+// SetSseEarlyKeepaliveEnabled sets the "sse_early_keepalive_enabled" field.
+func (u *GroupUpsertBulk) SetSseEarlyKeepaliveEnabled(v bool) *GroupUpsertBulk {
+	return u.Update(func(s *GroupUpsert) {
+		s.SetSseEarlyKeepaliveEnabled(v)
+	})
+}
+
+// UpdateSseEarlyKeepaliveEnabled sets the "sse_early_keepalive_enabled" field to the value that was provided on create.
+func (u *GroupUpsertBulk) UpdateSseEarlyKeepaliveEnabled() *GroupUpsertBulk {
+	return u.Update(func(s *GroupUpsert) {
+		s.UpdateSseEarlyKeepaliveEnabled()
+	})
+}
+
+// SetStreamSmoothingEnabled sets the "stream_smoothing_enabled" field.
+func (u *GroupUpsertBulk) SetStreamSmoothingEnabled(v bool) *GroupUpsertBulk {
+	return u.Update(func(s *GroupUpsert) {
+		s.SetStreamSmoothingEnabled(v)
+	})
+}
+
+// UpdateStreamSmoothingEnabled sets the "stream_smoothing_enabled" field to the value that was provided on create.
+func (u *GroupUpsertBulk) UpdateStreamSmoothingEnabled() *GroupUpsertBulk {
+	return u.Update(func(s *GroupUpsert) {
+		s.UpdateStreamSmoothingEnabled()
+	})
+}
+
+// SetSilentRetry5xxEnabled sets the "silent_retry_5xx_enabled" field.
+func (u *GroupUpsertBulk) SetSilentRetry5xxEnabled(v bool) *GroupUpsertBulk {
+	return u.Update(func(s *GroupUpsert) {
+		s.SetSilentRetry5xxEnabled(v)
+	})
+}
+
+// UpdateSilentRetry5xxEnabled sets the "silent_retry_5xx_enabled" field to the value that was provided on create.
+func (u *GroupUpsertBulk) UpdateSilentRetry5xxEnabled() *GroupUpsertBulk {
+	return u.Update(func(s *GroupUpsert) {
+		s.UpdateSilentRetry5xxEnabled()
 	})
 }
 

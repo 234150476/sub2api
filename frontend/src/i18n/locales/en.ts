@@ -2321,6 +2321,25 @@ export default {
         enabled: 'Enabled',
         disabled: 'Disabled'
       },
+      trafficShaping: {
+        title: 'Traffic Shaping',
+        advancedTag: 'Advanced',
+        comingSoonTag: 'Coming Soon',
+        autoOnTag: 'Auto-enabled',
+        description: 'Make this group appear "faster and more reliable" to third-party aggregator sites (e.g. axonhub) for channel ranking. Only affects requests under this group; other groups are unaffected. ⚠ Keep disabled for personal-use groups.',
+        sseKeepalive: {
+          label: 'Fast First-Byte (SSE Keepalive)',
+          hint: 'Send an SSE comment heartbeat to the downstream as soon as the upstream response header arrives, dropping the TTFT measured by aggregators to ~150ms. SDK clients ignore this heartbeat — no functional impact.'
+        },
+        streamSmoothing: {
+          label: 'Stream Output Smoothing',
+          hint: 'Smooth stream output bursts at a fixed pace (default 50 token/s), so aggregators measure a steadier TPS EWMA.'
+        },
+        silentRetry5xx: {
+          label: 'Silent 5xx Retry',
+          hint: 'Silently retry on a different account when upstream returns 5xx / network errors, hiding failures from aggregators. sub2api default failover already covers this behavior.'
+        }
+      },
       claudeMaxSimulation: {
         title: 'Claude Max Usage Simulation',
         tooltip:
@@ -5718,6 +5737,34 @@ export default {
         maxVersionPlaceholder: 'e.g. 2.5.0',
         maxVersionHint:
           'Reject Claude Code clients above this version (semver format). Leave empty to allow any version.'
+      },
+      codexVersion: {
+        title: 'Codex CLI Fingerprint Version',
+        description:
+          'Automatically tracks the latest Codex CLI release from GitHub. Upstream requests use the latest User-Agent to avoid being rejected by relays that enforce client version checks.',
+        currentVersion: 'Current Version',
+        source: 'Data Source',
+        fetchedAt: 'Last Synced',
+        refreshInterval: 'Refresh Interval',
+        userAgent: 'User-Agent',
+        autoUpdateOff: 'Auto-update disabled',
+        autoUpdateOffHint:
+          'Auto-update is off; currently using fallback_version from config. Edit gateway.codex_cli.auto_update to change.',
+        autoUpdateOnHint:
+          'Auto-update is on; the latest Codex CLI release is fetched from GitHub at each refresh interval.',
+        neverFetched: 'Not yet synced',
+        reload: 'Reload Status',
+        reloadSuccess: 'Status reloaded',
+        refreshNow: 'Fetch from GitHub Now',
+        refreshing: 'Fetching…',
+        refreshSuccess: 'Updated to version {version}',
+        refreshFailed: 'GitHub fetch failed; current version unchanged',
+        sources: {
+          github: 'GitHub Release',
+          cache: 'Database Cache',
+          fallback: 'Config Fallback',
+          hardcoded: 'Code Fallback'
+        }
       },
       scheduling: {
         title: 'Gateway Scheduling Settings',

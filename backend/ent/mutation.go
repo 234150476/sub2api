@@ -15098,6 +15098,10 @@ type GroupMutation struct {
 	models_list_config                      *domain.GroupModelsListConfig
 	rpm_limit                               *int
 	addrpm_limit                            *int
+	traffic_shaping_enabled                 *bool
+	sse_early_keepalive_enabled             *bool
+	stream_smoothing_enabled                *bool
+	silent_retry_5xx_enabled                *bool
 	clearedFields                           map[string]struct{}
 	api_keys                                map[int64]struct{}
 	removedapi_keys                         map[int64]struct{}
@@ -16906,6 +16910,150 @@ func (m *GroupMutation) ResetRpmLimit() {
 	m.addrpm_limit = nil
 }
 
+// SetTrafficShapingEnabled sets the "traffic_shaping_enabled" field.
+func (m *GroupMutation) SetTrafficShapingEnabled(b bool) {
+	m.traffic_shaping_enabled = &b
+}
+
+// TrafficShapingEnabled returns the value of the "traffic_shaping_enabled" field in the mutation.
+func (m *GroupMutation) TrafficShapingEnabled() (r bool, exists bool) {
+	v := m.traffic_shaping_enabled
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTrafficShapingEnabled returns the old "traffic_shaping_enabled" field's value of the Group entity.
+// If the Group object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GroupMutation) OldTrafficShapingEnabled(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTrafficShapingEnabled is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTrafficShapingEnabled requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTrafficShapingEnabled: %w", err)
+	}
+	return oldValue.TrafficShapingEnabled, nil
+}
+
+// ResetTrafficShapingEnabled resets all changes to the "traffic_shaping_enabled" field.
+func (m *GroupMutation) ResetTrafficShapingEnabled() {
+	m.traffic_shaping_enabled = nil
+}
+
+// SetSseEarlyKeepaliveEnabled sets the "sse_early_keepalive_enabled" field.
+func (m *GroupMutation) SetSseEarlyKeepaliveEnabled(b bool) {
+	m.sse_early_keepalive_enabled = &b
+}
+
+// SseEarlyKeepaliveEnabled returns the value of the "sse_early_keepalive_enabled" field in the mutation.
+func (m *GroupMutation) SseEarlyKeepaliveEnabled() (r bool, exists bool) {
+	v := m.sse_early_keepalive_enabled
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSseEarlyKeepaliveEnabled returns the old "sse_early_keepalive_enabled" field's value of the Group entity.
+// If the Group object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GroupMutation) OldSseEarlyKeepaliveEnabled(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSseEarlyKeepaliveEnabled is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSseEarlyKeepaliveEnabled requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSseEarlyKeepaliveEnabled: %w", err)
+	}
+	return oldValue.SseEarlyKeepaliveEnabled, nil
+}
+
+// ResetSseEarlyKeepaliveEnabled resets all changes to the "sse_early_keepalive_enabled" field.
+func (m *GroupMutation) ResetSseEarlyKeepaliveEnabled() {
+	m.sse_early_keepalive_enabled = nil
+}
+
+// SetStreamSmoothingEnabled sets the "stream_smoothing_enabled" field.
+func (m *GroupMutation) SetStreamSmoothingEnabled(b bool) {
+	m.stream_smoothing_enabled = &b
+}
+
+// StreamSmoothingEnabled returns the value of the "stream_smoothing_enabled" field in the mutation.
+func (m *GroupMutation) StreamSmoothingEnabled() (r bool, exists bool) {
+	v := m.stream_smoothing_enabled
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStreamSmoothingEnabled returns the old "stream_smoothing_enabled" field's value of the Group entity.
+// If the Group object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GroupMutation) OldStreamSmoothingEnabled(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStreamSmoothingEnabled is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStreamSmoothingEnabled requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStreamSmoothingEnabled: %w", err)
+	}
+	return oldValue.StreamSmoothingEnabled, nil
+}
+
+// ResetStreamSmoothingEnabled resets all changes to the "stream_smoothing_enabled" field.
+func (m *GroupMutation) ResetStreamSmoothingEnabled() {
+	m.stream_smoothing_enabled = nil
+}
+
+// SetSilentRetry5xxEnabled sets the "silent_retry_5xx_enabled" field.
+func (m *GroupMutation) SetSilentRetry5xxEnabled(b bool) {
+	m.silent_retry_5xx_enabled = &b
+}
+
+// SilentRetry5xxEnabled returns the value of the "silent_retry_5xx_enabled" field in the mutation.
+func (m *GroupMutation) SilentRetry5xxEnabled() (r bool, exists bool) {
+	v := m.silent_retry_5xx_enabled
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSilentRetry5xxEnabled returns the old "silent_retry_5xx_enabled" field's value of the Group entity.
+// If the Group object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GroupMutation) OldSilentRetry5xxEnabled(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSilentRetry5xxEnabled is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSilentRetry5xxEnabled requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSilentRetry5xxEnabled: %w", err)
+	}
+	return oldValue.SilentRetry5xxEnabled, nil
+}
+
+// ResetSilentRetry5xxEnabled resets all changes to the "silent_retry_5xx_enabled" field.
+func (m *GroupMutation) ResetSilentRetry5xxEnabled() {
+	m.silent_retry_5xx_enabled = nil
+}
+
 // AddAPIKeyIDs adds the "api_keys" edge to the APIKey entity by ids.
 func (m *GroupMutation) AddAPIKeyIDs(ids ...int64) {
 	if m.api_keys == nil {
@@ -17264,7 +17412,7 @@ func (m *GroupMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *GroupMutation) Fields() []string {
-	fields := make([]string, 0, 35)
+	fields := make([]string, 0, 39)
 	if m.created_at != nil {
 		fields = append(fields, group.FieldCreatedAt)
 	}
@@ -17370,6 +17518,18 @@ func (m *GroupMutation) Fields() []string {
 	if m.rpm_limit != nil {
 		fields = append(fields, group.FieldRpmLimit)
 	}
+	if m.traffic_shaping_enabled != nil {
+		fields = append(fields, group.FieldTrafficShapingEnabled)
+	}
+	if m.sse_early_keepalive_enabled != nil {
+		fields = append(fields, group.FieldSseEarlyKeepaliveEnabled)
+	}
+	if m.stream_smoothing_enabled != nil {
+		fields = append(fields, group.FieldStreamSmoothingEnabled)
+	}
+	if m.silent_retry_5xx_enabled != nil {
+		fields = append(fields, group.FieldSilentRetry5xxEnabled)
+	}
 	return fields
 }
 
@@ -17448,6 +17608,14 @@ func (m *GroupMutation) Field(name string) (ent.Value, bool) {
 		return m.ModelsListConfig()
 	case group.FieldRpmLimit:
 		return m.RpmLimit()
+	case group.FieldTrafficShapingEnabled:
+		return m.TrafficShapingEnabled()
+	case group.FieldSseEarlyKeepaliveEnabled:
+		return m.SseEarlyKeepaliveEnabled()
+	case group.FieldStreamSmoothingEnabled:
+		return m.StreamSmoothingEnabled()
+	case group.FieldSilentRetry5xxEnabled:
+		return m.SilentRetry5xxEnabled()
 	}
 	return nil, false
 }
@@ -17527,6 +17695,14 @@ func (m *GroupMutation) OldField(ctx context.Context, name string) (ent.Value, e
 		return m.OldModelsListConfig(ctx)
 	case group.FieldRpmLimit:
 		return m.OldRpmLimit(ctx)
+	case group.FieldTrafficShapingEnabled:
+		return m.OldTrafficShapingEnabled(ctx)
+	case group.FieldSseEarlyKeepaliveEnabled:
+		return m.OldSseEarlyKeepaliveEnabled(ctx)
+	case group.FieldStreamSmoothingEnabled:
+		return m.OldStreamSmoothingEnabled(ctx)
+	case group.FieldSilentRetry5xxEnabled:
+		return m.OldSilentRetry5xxEnabled(ctx)
 	}
 	return nil, fmt.Errorf("unknown Group field %s", name)
 }
@@ -17780,6 +17956,34 @@ func (m *GroupMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetRpmLimit(v)
+		return nil
+	case group.FieldTrafficShapingEnabled:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTrafficShapingEnabled(v)
+		return nil
+	case group.FieldSseEarlyKeepaliveEnabled:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSseEarlyKeepaliveEnabled(v)
+		return nil
+	case group.FieldStreamSmoothingEnabled:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStreamSmoothingEnabled(v)
+		return nil
+	case group.FieldSilentRetry5xxEnabled:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSilentRetry5xxEnabled(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Group field %s", name)
@@ -18162,6 +18366,18 @@ func (m *GroupMutation) ResetField(name string) error {
 		return nil
 	case group.FieldRpmLimit:
 		m.ResetRpmLimit()
+		return nil
+	case group.FieldTrafficShapingEnabled:
+		m.ResetTrafficShapingEnabled()
+		return nil
+	case group.FieldSseEarlyKeepaliveEnabled:
+		m.ResetSseEarlyKeepaliveEnabled()
+		return nil
+	case group.FieldStreamSmoothingEnabled:
+		m.ResetStreamSmoothingEnabled()
+		return nil
+	case group.FieldSilentRetry5xxEnabled:
+		m.ResetSilentRetry5xxEnabled()
 		return nil
 	}
 	return fmt.Errorf("unknown Group field %s", name)

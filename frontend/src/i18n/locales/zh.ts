@@ -2406,6 +2406,25 @@ export default {
         enabled: '已启用',
         disabled: '已禁用'
       },
+      trafficShaping: {
+        title: '流量伪装',
+        advancedTag: '高级',
+        comingSoonTag: '即将推出',
+        autoOnTag: '已自动启用',
+        description: '让该分组对外表现得"更快更稳"，主要用于第三方聚合站（如 axonhub）的渠道排名。仅对该分组下的请求生效，不影响其他分组。⚠ 自用分组建议保持关闭。',
+        sseKeepalive: {
+          label: 'SSE 极速首字节',
+          hint: '收到上游响应头时立即向下游发送一个 SSE 注释心跳，让聚合站测得的 TTFT 降到 ~150ms。SDK 客户端会忽略此心跳，对实际功能无影响。'
+        },
+        streamSmoothing: {
+          label: '流式响应平滑',
+          hint: '用固定节奏（默认 50 token/s）平滑流式输出 burst，让聚合站测得的 TPS EWMA 更稳定。'
+        },
+        silentRetry5xx: {
+          label: '上游 5xx 静默重试',
+          hint: '上游返回 5xx/网络错误时静默切账号重试，避免聚合站观察到失败。sub2api 默认 failover 已覆盖此行为。'
+        }
+      },
       supportedScopes: {
         title: '支持的模型系列',
         tooltip: '选择此分组支持的模型系列。未勾选的系列将不会被路由到此分组。',
@@ -5872,6 +5891,31 @@ export default {
         maxVersion: '最高版本号',
         maxVersionPlaceholder: '例如 2.5.0',
         maxVersionHint: '拒绝高于此版本的 Claude Code 客户端请求（semver 格式）。留空则不限制最高版本。'
+      },
+      codexVersion: {
+        title: 'Codex CLI 指纹版本',
+        description: '自动从 GitHub 跟踪最新 Codex CLI 版本号，转发上游时使用最新 User-Agent，避免被公益站等校验拒绝。',
+        currentVersion: '当前版本',
+        source: '数据来源',
+        fetchedAt: '上次同步',
+        refreshInterval: '刷新间隔',
+        userAgent: 'User-Agent',
+        autoUpdateOff: '自动跟版已关闭',
+        autoUpdateOffHint: '自动跟版未开启，当前使用配置文件中的 fallback_version。需调整请编辑 gateway.codex_cli.auto_update。',
+        autoUpdateOnHint: '已开启自动跟版，每个刷新间隔会从 GitHub Release 拉取最新 Codex CLI 版本。',
+        neverFetched: '尚未同步',
+        reload: '刷新状态',
+        reloadSuccess: '状态已刷新',
+        refreshNow: '立即从 GitHub 拉取',
+        refreshing: '正在拉取…',
+        refreshSuccess: '已更新到版本 {version}',
+        refreshFailed: '从 GitHub 拉取失败，当前版本不变',
+        sources: {
+          github: 'GitHub Release',
+          cache: '数据库缓存',
+          fallback: '配置兜底',
+          hardcoded: '代码兜底'
+        }
       },
       scheduling: {
         title: '网关调度设置',

@@ -555,6 +555,13 @@ export interface AdminGroup extends Group {
 
   // 分组排序
   sort_order: number
+
+  // 流量伪装行为开关（migration 154）—— 用于第三方聚合站友好型分组。
+  // 总开关关闭时所有子开关都不生效；所有字段缺省时按 false 处理（保持现有行为不变）。
+  traffic_shaping_enabled?: boolean
+  sse_early_keepalive_enabled?: boolean
+  stream_smoothing_enabled?: boolean
+  silent_retry_5xx_enabled?: boolean
 }
 
 export interface ModelsListConfig {
