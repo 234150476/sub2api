@@ -30,6 +30,11 @@ type Profile struct {
 	KeyShareGroups      []uint16 // Empty uses [X25519]
 	PSKModes            []uint16 // Empty uses [psk_dhe_ke]
 	Extensions          []uint16 // Extension type IDs in order; empty uses default Node.js 24.x order
+
+	// UseSidecar 为 true 时绕过 utls，把请求委托给外部 Rust sidecar，
+	// 让出向 ja3 = 真实 codex CLI（utls 1.8.2 无法仿出 codex 的 X25519MLKEM768）。
+	// sidecar URL 由全局 ENV CODEX_SIDECAR_URL 提供。
+	UseSidecar bool
 }
 
 // Dialer creates TLS connections with custom fingerprints.

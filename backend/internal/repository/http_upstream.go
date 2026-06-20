@@ -202,10 +202,15 @@ func (s *httpUpstreamService) Do(req *http.Request, proxyURL string, accountID i
 // DoWithTLS 执行带 TLS 指纹伪装的 HTTP 请求
 //
 // profile 为 nil 时不启用 TLS 指纹，行为与 Do 方法相同。
-// profile 非 nil 时使用指定的 Profile 进行 TLS 指纹伪装。
+// profile.UseSidecar 为 true 时把请求委托给 Rust sidecar（让 ja3 = 真实 codex CLI）。
+// 否则使用指定的 Profile 进行 TLS 指纹伪装（utls 路径）。
 func (s *httpUpstreamService) DoWithTLS(req *http.Request, proxyURL string, accountID int64, accountConcurrency int, profile *tlsfingerprint.Profile) (*http.Response, error) {
 	if profile == nil {
 		return s.Do(req, proxyURL, accountID, accountConcurrency)
+	}
+	if profile.UseSidecar {
+		slog.Debug("codex_sidecar_enabled", "account_id", accountID, "profile", profile.Name)
+		return s.doViaSidecar(req)
 	}
 	upstreamProfile := service.HTTPUpstreamProfileDefault
 	if req != nil {

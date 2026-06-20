@@ -161,6 +161,12 @@ services:
       - GATEWAY_IMAGE_CONCURRENCY_OVERFLOW_MODE=${GATEWAY_IMAGE_CONCURRENCY_OVERFLOW_MODE:-reject}
       - GATEWAY_IMAGE_CONCURRENCY_WAIT_TIMEOUT_SECONDS=${GATEWAY_IMAGE_CONCURRENCY_WAIT_TIMEOUT_SECONDS:-30}
       - GATEWAY_IMAGE_CONCURRENCY_MAX_WAITING_REQUESTS=${GATEWAY_IMAGE_CONCURRENCY_MAX_WAITING_REQUESTS:-100}
+
+      # =======================================================================
+      # Codex TLS Sidecar (出向请求经由 Rust sidecar，使 ja3 = 真实 codex CLI)
+      # =======================================================================
+      # 留空时不启用 sidecar；设置后由 profile.UseSidecar=true 触发分流。
+      - CODEX_SIDECAR_URL=${CODEX_SIDECAR_URL:-}
     depends_on:
       postgres:
         condition: service_healthy
@@ -256,6 +262,45 @@ services:
       start_period: 5s
     # 注意：不暴露端口到宿主机，应用通过内部网络连接
     # 如需调试，可临时添加：ports: ["127.0.0.1:6379:6379"]
+
+  # ===========================================================================
+  # Codex TLS Sidecar (可选)
+  # ---------------------------------------------------------------------------
+  # 仅在需要让 sub2api 出向 ja3 = 真实 codex CLI 时启用，例如对接对 ja3 严格的
+  # 公益站。该 service 用 Rust + reqwest 0.12 + rustls 0.23 + aws-lc-rs 默认值
+  # 重发请求，因此 ClientHello 字节级匹配 codex CLI。
+  #
+  # 启用步骤：
+  #   1. 在 .env 设置 CODEX_SIDECAR_URL=http://codex-sidecar:8888
+  #   2. docker compose up -d codex-sidecar
+  #   3. 给目标 account 在 extra 中标记 use_tls_sidecar=true（jsonb 配置）
+  # ===========================================================================
+  codex-sidecar:
+    image: codex-tls-sidecar:0.1.0
+    build:
+      context: ../backend/sidecars/codex-tls-sidecar
+      dockerfile: Dockerfile
+    container_name: codex-tls-sidecar
+    restart: unless-stopped
+    environment:
+      - SIDECAR_BIND=0.0.0.0:8888
+      - RUST_LOG=${CODEX_SIDECAR_LOG:-codex_tls_sidecar=info}
+      - TZ=${TZ:-Asia/Shanghai}
+    networks:
+      - sub2api-network
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8888/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    # 不暴露端口到宿主机，仅 sub2api 容器内网访问
+
 # =============================================================================
 # Volumes
 # =============================================================================

@@ -1592,6 +1592,22 @@ func (a *Account) IsTLSFingerprintEnabled() bool {
 	return false
 }
 
+// IsCodexSidecarEnabled 检查是否把出向请求委托给 Rust sidecar
+// （让 ja3 字节级匹配真实 codex CLI，绕过 sharedchat 等 ja3 严格的公益站校验）。
+// 仅在 TLS 指纹已启用时才会被读取。
+// sidecar URL 由全局 ENV CODEX_SIDECAR_URL 提供。
+func (a *Account) IsCodexSidecarEnabled() bool {
+	if a.Extra == nil {
+		return false
+	}
+	if v, ok := a.Extra["use_codex_sidecar"]; ok {
+		if enabled, ok := v.(bool); ok {
+			return enabled
+		}
+	}
+	return false
+}
+
 // GetTLSFingerprintProfileID 获取账号绑定的 TLS 指纹模板 ID
 // 返回 0 表示未绑定（使用内置默认 profile）
 func (a *Account) GetTLSFingerprintProfileID() int64 {
