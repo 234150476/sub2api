@@ -1,0 +1,29 @@
+{
+  "id": "06-20-rust-tls-sidecar",
+  "name": "06-20-rust-tls-sidecar",
+  "title": "Rust TLS Sidecar — 让 sub2api 出向 ja3 = 真实 codex CLI",
+  "description": "复用 codex 同款 reqwest 0.12 + rustls 0.23 + aws-lc-rs 默认值，写一个 80-150 行的 Rust 透明 HTTP 代理，让 sub2api 转发到 sharedchat 等 ja3 严格的公益站时字节级匹配真实 codex CLI 的 ja3。",
+  "status": "in_progress",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "cfy",
+  "assignee": "cfy",
+  "createdAt": "2026-06-20",
+  "completedAt": null,
+  "branch": null,
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": "06-20-sub2api-sharedchat-ja3",
+  "relatedFiles": [],
+  "notes": "Brainstorm 阶段关键发现：codex 没定制 TLS 配置，ja3 来自 rustls 0.23 + aws-lc-rs 默认值。因此不需 vendor codex 源码，只需锁同款依赖版本。预计代码量 80-150 行，工作量 0.5-1 天。",
+  "meta": {
+    "estimatedDays": 1,
+    "blockedByCodexDeps": "reqwest=0.12, rustls=0.23, aws_lc_rs"
+  }
+}

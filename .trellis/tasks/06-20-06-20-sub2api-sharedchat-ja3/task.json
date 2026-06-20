@@ -1,0 +1,30 @@
+{
+  "id": "06-20-sub2api-sharedchat-ja3",
+  "name": "06-20-sub2api-sharedchat-ja3",
+  "title": "sub2api 流量伪装与 sharedchat ja3 攻坚",
+  "description": "",
+  "status": "done",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "cfy",
+  "assignee": "cfy",
+  "createdAt": "2026-06-20",
+  "completedAt": "2026-06-20",
+  "branch": null,
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "out-of-band 完成：代码直接部署到生产 v3 镜像，未走 trellis start/branch/PR 流程。git 改动待后续单独整理 PR。",
+  "meta": {
+    "outOfBandCompleted": true,
+    "deployedImage": "sub2api:traffic-shaping-2026-06-20-v3",
+    "deployedTo": "sub2api-sg (agent-ssh-cli)"
+  }
+}
