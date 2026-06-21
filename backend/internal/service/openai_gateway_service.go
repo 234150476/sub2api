@@ -4289,6 +4289,25 @@ func (s *OpenAIGatewayService) buildUpstreamRequest(ctx context.Context, c *gin.
 	}
 	targetURL = appendOpenAIResponsesRequestPathSuffix(targetURL, openAIResponsesRequestPathSuffix(c))
 
+	// 公益站 codex body schema 改写：sharedchat 等公益站校验 body 含真 codex CLI 完整结构
+	// （instructions / tools / reasoning / client_metadata 等），简单 input 会被拒。
+	// 当账号启用 inject_codex_headers 时，把客户端 body 嫁接到真 codex body 模板。
+	if account.IsCodexHeadersInjectionEnabled() {
+		sessionID := strings.TrimSpace(c.GetHeader("session-id"))
+		if sessionID == "" {
+			sessionID = uuid.NewString()
+		}
+		threadID := strings.TrimSpace(c.GetHeader("thread-id"))
+		if threadID == "" {
+			threadID = sessionID
+		}
+		if rewritten, err := rewriteBodyForCodexClient(body, sessionID, threadID, "", ""); err == nil {
+			body = rewritten
+		} else {
+			logger.LegacyPrintf("service.openai_gateway", "[CODEX-BODY-REWRITE] failed: %v (fallback to original body)", err)
+		}
+	}
+
 	req, err := http.NewRequestWithContext(ctx, "POST", targetURL, bytes.NewReader(body))
 	if err != nil {
 		return nil, err
