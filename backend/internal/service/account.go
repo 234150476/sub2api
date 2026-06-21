@@ -1481,6 +1481,19 @@ func (a *Account) IsAnthropicAPIKeyPassthroughEnabled() bool {
 	return ok && enabled
 }
 
+// IsAnthropicStrictPassthrough 在 anthropic_passthrough 基础上声明"严格透传"——
+// 完全不动客户端 body（跳过 StripEmptyTextBlocks / sanitizeAnthropicBodyForBetaTokens
+// 等所有 sanitize 步骤），用于过 PackyCode 等做请求体 hash 校验的上游。
+// 字段：accounts.extra.strict_anthropic_passthrough。
+// 仅在 anthropic_passthrough=true 时才生效；默认 false（保持现有 sanitize 行为）。
+func (a *Account) IsAnthropicStrictPassthrough() bool {
+	if !a.IsAnthropicAPIKeyPassthroughEnabled() {
+		return false
+	}
+	enabled, ok := a.Extra["strict_anthropic_passthrough"].(bool)
+	return ok && enabled
+}
+
 // WebSearch 模拟三态常量
 const (
 	WebSearchModeDefault  = "default"  // 跟随渠道配置

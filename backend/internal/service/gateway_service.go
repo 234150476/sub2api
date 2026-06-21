@@ -5549,8 +5549,11 @@ func (s *GatewayService) forwardAnthropicAPIKeyPassthroughWithInput(
 	if c != nil {
 		c.Set("anthropic_passthrough", true)
 	}
-	// Pre-filter: strip empty text blocks (including nested in tool_result) to prevent upstream 400.
-	input.Body = StripEmptyTextBlocks(input.Body)
+	// Pre-filter: 严格透传模式下完全跳过 body 改动以过上游 hash 校验（PackyCode 等）；
+	// 否则做空 text block 剥离防止上游 400。
+	if !account.IsAnthropicStrictPassthrough() {
+		input.Body = StripEmptyTextBlocks(input.Body)
+	}
 	if input.Parsed != nil {
 		// 透传分支也会改写实际 wire body，成功 usage hash 依赖这里同步当前 body。
 		if err := input.Parsed.ReplaceBody(input.Body); err != nil {
@@ -5779,12 +5782,15 @@ func (s *GatewayService) buildUpstreamRequestAnthropicAPIKeyPassthrough(
 	// 能力维度 body sanitize：透传路径上 anthropic-beta header 原样透传客户端值，
 	// 依此决定是否保留 body 中的 context_management。避免“客户端 body 带字段但
 	// header 忘记带 beta token”的客户端 bug 在透传场景下让上游 400。
-	clientBeta := ""
-	if c != nil && c.Request != nil {
-		clientBeta = getHeaderRaw(c.Request.Header, "anthropic-beta")
-	}
-	if sanitized, changed := sanitizeAnthropicBodyForBetaTokens(body, clientBeta); changed {
-		body = sanitized
+	// 严格透传模式下完全跳过，保证 body 字节级等同客户端原值（过 PackyCode 等 hash 校验）。
+	if !account.IsAnthropicStrictPassthrough() {
+		clientBeta := ""
+		if c != nil && c.Request != nil {
+			clientBeta = getHeaderRaw(c.Request.Header, "anthropic-beta")
+		}
+		if sanitized, changed := sanitizeAnthropicBodyForBetaTokens(body, clientBeta); changed {
+			body = sanitized
+		}
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, targetURL, bytes.NewReader(body))
