@@ -81,6 +81,20 @@ var openaiAllowedHeaders = map[string]bool{
 	"x-codex-turn-metadata": true,
 }
 
+// codexStrictPassthroughExtraHeaders 在 codex_strict_passthrough=true 时额外放行的请求头。
+// 真 codex CLI 调上游公益站时会发这些 dash 命名 headers，sub2api 默认白名单只放
+// 了 underscore 命名，所以严格透传模式下需要把它们也放过去，让客户端 codex CLI 的
+// 完整 fingerprint 字节级抵达上游。
+var codexStrictPassthroughExtraHeaders = map[string]bool{
+	"accept":                true,
+	"session-id":            true,
+	"thread-id":             true,
+	"x-client-request-id":   true,
+	"x-codex-window-id":     true,
+	"x-codex-beta-features": true,
+	"openai-beta":           true,
+}
+
 // OpenAI passthrough allowed headers whitelist.
 // 透传模式下仅放行这些低风险请求头，避免将非标准/环境噪声头传给上游触发风控。
 var openaiPassthroughAllowedHeaders = map[string]bool{
@@ -4331,9 +4345,12 @@ func (s *OpenAIGatewayService) buildUpstreamRequest(ctx context.Context, c *gin.
 	}
 
 	// Whitelist passthrough headers
+	// codex_strict_passthrough=true 时把 codex CLI 真发的 dash 命名 headers 也放过去，
+	// 让客户端 codex CLI 完整 fingerprint 字节级抵达上游。
+	codexStrictExtras := account.IsCodexStrictPassthrough()
 	for key, values := range c.Request.Header {
 		lowerKey := strings.ToLower(key)
-		if openaiAllowedHeaders[lowerKey] {
+		if openaiAllowedHeaders[lowerKey] || (codexStrictExtras && codexStrictPassthroughExtraHeaders[lowerKey]) {
 			for _, v := range values {
 				req.Header.Add(key, v)
 			}
@@ -4390,7 +4407,9 @@ func (s *OpenAIGatewayService) buildUpstreamRequest(ctx context.Context, c *gin.
 	s.overrideBrowserUserAgent(ctx, account, req)
 
 	// 公益站 codex CLI headers 注入：详见 injectCodexCLIHeaders 注释。
-	if account.IsCodexHeadersInjectionEnabled() {
+	// codex_strict_passthrough=true 时跳过此 inject（信任客户端就是真 codex CLI），
+	// 让客户端原始 originator/x-codex-*/session-id 等 headers 字节级保留。
+	if account.IsCodexHeadersInjectionEnabled() && !account.IsCodexStrictPassthrough() {
 		s.injectCodexCLIHeaders(req, c)
 	}
 

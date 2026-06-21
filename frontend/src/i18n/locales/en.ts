@@ -3459,9 +3459,9 @@ export default {
         injectCodexHeaders: 'Inject Codex CLI fingerprint (community sites)',
         injectCodexHeadersDesc:
           'When enabled, forwarded requests inject real codex CLI application-layer headers (originator / x-codex-* / session-id, etc.) and graft the client body onto the real codex body template. Used to bypass codex_access_restricted on community sites like sharedchat. OpenAI API Key accounts only.',
-        codexStrictPassthrough: 'Codex strict passthrough (preserve client body)',
+        codexStrictPassthrough: 'Codex strict passthrough (preserve client body & headers)',
         codexStrictPassthroughDesc:
-          'Builds on Codex fingerprint injection by skipping body rewrite, preserving the client request body byte-for-byte. Use when the client is the real codex CLI (already sends a complete, valid codex body) — keeps prompt cache_key and UUID continuity across turns to maximize upstream prompt cache hit rate. Only effective when "Inject Codex CLI fingerprint" is enabled. Note: the admin "Test connection" button ignores this switch (its payload is sub2api-simplified and must be rewritten to pass validation).',
+          'Builds on Codex fingerprint injection by skipping both body rewrite and headers inject, preserving the client request body and all codex headers byte-for-byte. Use when the client is the real codex CLI (already sends a complete, valid codex body and headers) — keeps prompt cache_key, session-id, turn-id continuity across turns to maximize upstream prompt cache hit rate. Only effective when "Inject Codex CLI fingerprint" is enabled. Note: the admin "Test connection" button ignores this switch (its payload is sub2api-simplified and must be rewritten to pass validation).',
         capabilityResponses: 'Responses',
         capabilityTextAuto: 'Responses / Chat Completions (Auto)',
         capabilityResponsesAuto: 'Responses (auto probe)',
