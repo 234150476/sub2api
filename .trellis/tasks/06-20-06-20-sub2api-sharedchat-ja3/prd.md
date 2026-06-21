@@ -169,3 +169,137 @@
 | 保留原始证据 pcap | ✅ /tmp/codex-real.pcap (316K) + /tmp/codex-real-call.pcap (139K) — Path 3 字节级对照原料 |
 | profile #1 | ✅ 保留 — 下次 Path 3 时用 |
 | PRD 修正 | ✅ jsonb 机制 + PG 凭证 |
+
+---
+
+## 会话 6 (2026-06-21) — 多账号配置 + 三大功能完整闭环
+
+### v8 - v15 完整版本里程碑
+
+| 版本 | 核心改动 | commit |
+|---|---|---|
+| v8 | sharedchat 测试连接补 codex body+headers 注入 | 59269904 |
+| v9 | strict_anthropic_passthrough 子开关救 PackyCode "请求体被篡改"403 | 9da455d0 |
+| v10 | 账号编辑弹窗加 inject_codex_headers + strict_anthropic_passthrough 开关 UI | c8d2f610 |
+| v11 | codex_strict_passthrough 子开关（body 路径不重写） | 08464a88 |
+| v12 | codex strict 真二选一（body+headers+白名单都跳过） | 76b5616f |
+| v13 | 修流量伪装 4 开关 update 路径漏链 | 9b36bba7 |
+| v14 | 修流量伪装 4 字段 GET 路径 dto 漏链 | ea91fc7c |
+| v15 | stream_smoothing 真实现（OpenAI passthrough SSE 主循环 15ms 节流） | 065755c2 |
+
+### 三大功能最终生效点
+
+| 功能 | 字段 | 真生效？ | 落点 |
+|---|---|---|---|
+| 流量伪装 SSE 极速心跳 | `groups.sse_early_keepalive_enabled` | ✅ | `openai_gateway_service.go:3942` 写 `: ping\n\n` |
+| 流量伪装 流式响应平滑 | `groups.stream_smoothing_enabled` | ✅ v15 实现 | OpenAI passthrough SSE 主循环每行后 15ms sleep |
+| 流量伪装 5xx 静默重试 | `groups.silent_retry_5xx_enabled` | ⚠️ 占位字段 | 字段定义齐但 0 个消费者，下次实现 |
+| Codex 注入 codex CLI 特征 | `accounts.extra.inject_codex_headers` | ✅ | account 47 sharedchat-公益 |
+| Codex 严格透传 | `accounts.extra.codex_strict_passthrough` | ✅ v12 真二选一 | 仅 inject_codex_headers=true 时生效 |
+| Anthropic 自动透传 | `accounts.extra.anthropic_passthrough` | ✅ 已有 | account 11/35 |
+| Anthropic 严格透传 | `accounts.extra.strict_anthropic_passthrough` | ✅ v9 实现 | 跳过 StripEmptyTextBlocks + sanitizeAnthropicBodyForBetaTokens |
+
+### 决定性发现
+
+#### 1. axonhub TTFT 真实计算逻辑（直接读源码确认）
+
+来源：`looplj/axonhub` `internal/server/orchestrator/performance.go:149-158`
+
+```go
+func (s *recordPerformanceStream) Current() *llm.Response {
+    event := s.stream.Current()
+    if event == nil { return event }
+    if !s.firstTokenSet && s.state.Perf != nil {
+        s.state.Perf.MarkFirstToken()  // ← TTFT 计时停止
+        s.firstTokenSet = true
+    }
+}
+```
+
+`s.stream.Current()` 返回的是**已解析的 `*llm.Response` 结构体**，SSE 注释帧
+（`: ping`）在更上游的 SSE parser 阶段就被丢掉。所以我们的 `: ping` 帧
+**不会被 axonhub 计为首字节**，没有"作弊"嫌疑。axonhub 测的是真实首个有效
+event 的到达时间。
+
+#### 2. PackyCode "请求体被篡改"根因
+
+sub2api 在 anthropic_passthrough 路径上有两处 body 改动：
+- `gateway_service.go:5553` `StripEmptyTextBlocks` — 剥空 text block
+- `gateway_service.go:5786` `sanitizeAnthropicBodyForBetaTokens` — 按 beta header 删 context_management 字段
+
+PackyCode/rightcode 等公益站对 body 做 hash 校验，sub2api 任何修改都会
+报"请求体被篡改"。`strict_anthropic_passthrough=true` 跳过这两步，让 body 字节级原样上送。
+
+#### 3. inject_codex_headers 当前实现是"模拟模式"，不是"透传模式"
+
+`codex_body_rewriter.go` 把客户端 body 整个丢弃，载入 sub2api embed 的 33KB
+codex 模板，重新生成所有 UUID。这对 curl/普通 SDK 是救命方案；对真 codex
+CLI 客户端反而破坏 prompt cache_key/UUID 连续性。
+
+`codex_strict_passthrough=true` 跳过 body rewrite + headers inject + 放宽
+header 白名单（`codexStrictPassthroughExtraHeaders`），让真 codex CLI 字节
+级透传。
+
+### 远端最终状态（2026-06-21）
+
+| 项 | 值 |
+|---|---|
+| 镜像 | sub2api:traffic-shaping-2026-06-21-v15 |
+| 容器 | sub2api / sub2api-postgres / sub2api-redis 全 healthy |
+| 镜像更新风险 | 零（tag 在 registry 不存在 + pull_policy=missing + 无 watchtower） |
+
+### 账号开关分布
+
+```sql
+-- account 47 sharedchat-公益 (openai apikey)
+extra: {
+  "enable_tls_fingerprint": true,
+  "tls_fingerprint_profile_id": 1,
+  "inject_codex_headers": true,
+  "openai_responses_supported": true
+}
+
+-- account 11 rightcode (anthropic apikey)
+-- account 35 PackyCode (anthropic apikey)
+extra: {
+  "anthropic_passthrough": true,
+  "strict_anthropic_passthrough": true
+}
+
+-- group 36 linuxhub (openai)
+{
+  traffic_shaping_enabled: true,
+  sse_early_keepalive_enabled: true,
+  stream_smoothing_enabled: true,
+  silent_retry_5xx_enabled: true
+}
+```
+
+### 已知未实现/未验证
+
+- `silent_retry_5xx_enabled` 字段已加但 0 消费者
+- group 36 当前唯一账号 52 linuxdohub 401 (refresh token 失效)，schedulable=false，无法验证流量伪装实际效果
+- axonhub 之前测的 3.51s 不是 group 36 数据（它账号挂了），来源待你下次确认
+
+### Lessons (会话 6 新增)
+
+6. **read/write 字段链路必须对称** — 加了字段不仅要写到 DB，还要让 GET 路径回传。
+   v13 修了 update 但 dto 漏，造成"保存后重新打开还是 OFF"假象，看似 bug 实际是
+   GET 路径漏链。
+7. **占位字段必须在 UI 标 coming-soon** — silent_retry_5xx UI 标了 `auto-on` 而不是
+   `coming-soon`，让用户误以为能用。
+8. **二选一就要真二选一** — codex_strict_passthrough 第一版只跳了 body 没跳 headers，
+   逻辑不对称。修真二选一 = body + headers + 白名单都按开关切换。
+9. **DB 不是唯一真相，缓存才是** — sub2api 用 scheduler_snapshot 把 group 数据
+   缓存到 redis，DB 改了但缓存可能滞后。debug 时先 invalidate 再观察。
+10. **直接读源码 > 猜实现** — axonhub TTFT 怎么算的，10 分钟读源码 > 1 小时猜。
+
+---
+
+## 会话 7（2026-06-21 收尾）— 持久化记忆
+
+> 用户决定删除本地仓库，本会话所有沉淀已写入：
+> - 本 PRD 文件（追加会话 6 完整记录）
+> - 远端 GitHub: 234150476/sub2api 包含 v8-v15 全部 commit (24 个本地 commit 全部 push)
+> - memory/ 下用户偏好 + 部署纪律 + 系统知识
+> - journal-1.md 追加会话索引
