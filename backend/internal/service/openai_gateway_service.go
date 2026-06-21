@@ -3957,6 +3957,12 @@ func (s *OpenAIGatewayService) handleStreamingResponsePassthrough(
 	clientOutputStarted := false
 	upstreamRequestID := strings.TrimSpace(resp.Header.Get("x-request-id"))
 	pendingLines := make([]string, 0, 8)
+
+	// 流式响应平滑：当 group 开了 traffic_shaping_enabled + stream_smoothing_enabled 时，
+	// 每条 line 写出后按固定间隔节流，把上游"涌出式"chunk 整流成均匀输出。
+	// 仅 clientOutputStarted=true 之后生效，保护首字延迟（首字仍立即写出 + flush）。
+	streamSmoothing := resolveGroupTrafficShaping(apiKeyGroup(getAPIKeyFromContext(c))).StreamSmoothing
+	const streamSmoothingDelay = 15 * time.Millisecond
 	writePendingLines := func() bool {
 		for _, pending := range pendingLines {
 			if _, err := fmt.Fprintln(w, pending); err != nil {
@@ -4058,8 +4064,14 @@ func (s *OpenAIGatewayService) handleStreamingResponsePassthrough(
 				clientDisconnected = true
 				logger.LegacyPrintf("service.openai_gateway", "[OpenAI passthrough] Client disconnected during streaming, continue draining upstream for usage: account=%d", account.ID)
 			} else {
+				wasStarted := clientOutputStarted
 				clientOutputStarted = true
 				flusher.Flush()
+				// 流式响应平滑：clientOutputStarted=true 之后才节流，保护首字延迟。
+				// 终结事件（[DONE] / response.failed / 其他 terminal）也不节流，让收尾立刻送达。
+				if streamSmoothing && wasStarted && !sawDone && !sawTerminalEvent && !forceFlushFailedEvent {
+					time.Sleep(streamSmoothingDelay)
+				}
 			}
 		}
 	}
