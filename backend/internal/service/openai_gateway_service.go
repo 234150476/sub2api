@@ -4368,6 +4368,11 @@ func (s *OpenAIGatewayService) buildUpstreamRequest(ctx context.Context, c *gin.
 	// （Chrome/Firefox/Safari/Edge 等），替换为后台配置的 Codex UA，避免 Cloudflare 触发 JS 质询。
 	s.overrideBrowserUserAgent(ctx, account, req)
 
+	// 公益站 codex CLI headers 注入：详见 injectCodexCLIHeaders 注释。
+	if account.IsCodexHeadersInjectionEnabled() {
+		s.injectCodexCLIHeaders(req, c)
+	}
+
 	// Ensure required headers exist
 	if req.Header.Get("content-type") == "" {
 		req.Header.Set("content-type", "application/json")
