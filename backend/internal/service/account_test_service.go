@@ -573,6 +573,21 @@ func (s *AccountTestService) testOpenAIAccountConnection(c *gin.Context, account
 	payload := createOpenAITestPayload(testModelID, isOAuth)
 	payloadBytes, _ := json.Marshal(payload)
 
+	// 对 inject_codex_headers=true 的账号（sharedchat 等公益站）做 body 嫁接，
+	// 让"测试连接"按钮跟生产 buildUpstreamRequest 路径行为一致，不再被 codex_access_restricted 拒。
+	// OAuth 路径走 chatgpt.com 内部 API，不需要嫁接。
+	codexInject := !isOAuth && account.IsCodexHeadersInjectionEnabled()
+	var codexSessionID, codexThreadID string
+	if codexInject {
+		codexSessionID = uuid.NewString()
+		codexThreadID = codexSessionID
+		if rewritten, err := rewriteBodyForCodexClient(payloadBytes, codexSessionID, codexThreadID, "", ""); err == nil {
+			payloadBytes = rewritten
+		} else {
+			log.Printf("[account_test] codex body rewrite failed: %v (fallback to original payload)", err)
+		}
+	}
+
 	// Send test_start event
 	s.sendEvent(c, TestEvent{Type: "test_start", Model: testModelID})
 
@@ -593,6 +608,11 @@ func (s *AccountTestService) testOpenAIAccountConnection(c *gin.Context, account
 		if chatgptAccountID != "" {
 			req.Header.Set("chatgpt-account-id", chatgptAccountID)
 		}
+	}
+
+	// 同步注入 codex CLI 应用层 headers（必须放在通用 headers 之后，会覆盖 accept/UA）。
+	if codexInject {
+		injectCodexHeadersForTest(req, codexSessionID, codexThreadID)
 	}
 
 	// Get proxy URL
@@ -1737,4 +1757,36 @@ func parseTestSSEOutput(body string) (responseText, errMsg string) {
 	}
 	responseText = strings.Join(texts, "")
 	return
+}
+
+// injectCodexHeadersForTest 给"测试连接"请求注入 codex CLI 应用层 headers。
+// 复用 OpenAIGatewayService.injectCodexCLIHeaders 的字段集，但用本地包级常量
+// codexCLIVersion 替代 service 注入，避免把 codexVersionSvc 拉到 AccountTestService。
+func injectCodexHeadersForTest(req *http.Request, sessionID, threadID string) {
+	if sessionID == "" {
+		sessionID = uuid.NewString()
+	}
+	if threadID == "" {
+		threadID = sessionID
+	}
+	clientRequestID := uuid.NewString()
+	windowID := sessionID + ":0"
+	installationID := uuid.NewString()
+	turnID := uuid.NewString()
+
+	req.Header.Set("originator", "codex_exec")
+	req.Header.Set("user-agent", fmt.Sprintf(
+		"codex_exec/%s (Linux; x86_64) unknown (codex_exec; %s)",
+		codexCLIVersion, codexCLIVersion,
+	))
+	req.Header.Set("accept", "text/event-stream")
+	req.Header.Set("x-codex-beta-features", "remote_compaction_v2")
+	req.Header.Set("x-codex-window-id", windowID)
+	req.Header.Set("x-client-request-id", clientRequestID)
+	req.Header.Set("session-id", sessionID)
+	req.Header.Set("thread-id", threadID)
+	req.Header.Set("x-codex-turn-metadata", fmt.Sprintf(
+		`{"installation_id":"%s","session_id":"%s","thread_id":"%s","turn_id":"%s","window_id":"%s","request_kind":"turn","sandbox":"seccomp","turn_started_at_unix_ms":%d}`,
+		installationID, sessionID, threadID, turnID, windowID, time.Now().UnixMilli(),
+	))
 }
