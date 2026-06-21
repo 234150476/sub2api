@@ -318,3 +318,139 @@ UA + originator 都对齐后仍 ❌:
   - `codex-rs/codex-client/src/custom_ca.rs` (34 KB)
   - `codex-rs/utils/rustls-provider/src/lib.rs` (1.5 KB) ← 关键
   - `codex-rs/Cargo.toml` workspace dependencies
+
+---
+
+## 会话 4 (2026-06-20 晚) — mitmproxy 捕获真 codex body + v7 上线
+
+### 关键发现：sharedchat 还校验 body schema
+
+```
+mitmproxy + CODEX_CA_CERTIFICATE 截真 codex CLI 完整请求 body (33 KB)
+→ 顶层必须含 11 个 codex 特有字段:
+   instructions / tools / reasoning / store / stream / include /
+   prompt_cache_key / text / client_metadata / model / input
+→ 只发简单 {"input":"hi"} 必被 codex_access_restricted 拒
+```
+
+### 实施：body 嫁接（commit 32e15944）
+
+```
+新增:
+  backend/internal/service/codex_template/body.json  (33 KB 真 codex 模板)
+  backend/internal/service/codex_template/template.go (//go:embed)
+  backend/internal/service/codex_body_rewriter.go    (嫁接 + UUID 重写)
+
+策略:
+  1. 加载模板 (含 14 KB instructions + 11 工具 schema + reasoning effort=medium)
+  2. 客户端的 model/input/max_output_tokens merge 进去
+  3. session/thread/turn/window/installation UUID 每次重新生成 (防重放)
+  4. x-codex-turn-metadata 同步生成 stringified JSON
+
+修改:
+  openai_gateway_service.go:buildUpstreamRequest 调 body rewriter
+  (仅 inject_codex_headers=true 时启用)
+
+部署: sub2api:traffic-shaping-2026-06-20-v7 (b75... 145 MB)
+```
+
+### v7 实测进展
+
+```
+旧 v6: codex_access_restricted (body schema 不对)
+新 v7: global_fixed_window_quota_exhausted (公益站当日额度耗尽)
+     = 完全通过 codex 客户端检测，待额度刷新
+```
+
+---
+
+## 会话 5 (2026-06-21 中) — 端到端验证通过 ✅
+
+### 实测命令
+
+```bash
+curl -sS -m 150 -o /tmp/v7-resp.json -w 'HTTP=%{http_code} TIME=%{time_total}s' \
+  -X POST http://127.0.0.1:8080/v1/responses \
+  -H 'Authorization: Bearer sk-test-ed33e4dac92100ff73fb7ccd121d7f39' \
+  -H 'Content-Type: application/json' \
+  -d '{"model":"gpt-5.4","input":"Say hi in 3 words.","stream":false}'
+```
+
+### 结果
+
+| 项 | 值 |
+|---|---|
+| HTTP | 200 |
+| Body size | 29 243 bytes |
+| `status` | `completed`, `error: null` |
+| Output text | **"Hi there today"** (3 个词，遵循指令) |
+| usage.input_tokens | 11 994 (cached 11 328 → codex 模板 prefix 在上游稳定缓存) |
+| usage.output_tokens | 92 (reasoning 78) |
+| Account | id=47 sharedchat-公益, schedulable=true |
+
+### 决定性事实
+
+```
+最终救活 sharedchat 的 ≠ Rust sidecar
+最终救活 sharedchat 的 = sub2api 原生 utls (profile #1) + headers 注入 + body 嫁接
+```
+
+**Rust sidecar 容器都没在跑** (sub2api-sg 上无 codex-sidecar 容器)。account 47 也没配 `use_tls_sidecar`，
+默认走 sub2api 自身的 utls TLS 指纹 + 应用层注入即可通过 sharedchat。
+
+### model ID 约束（不是白名单，是 ID 合法性）
+
+```
+gpt-5.4 ✅ codex CLI 0.141.0 默认模型 ID (codex 系列就是 gpt-5.4/5.5/5.6 这种小版本号)
+gpt-5   ❌ 根本不是合法 codex model ID，透传上去公益站不识别 → 503
+```
+
+订正：先前一度怀疑公益站做了 model 白名单，实际上是 `gpt-5` 在 codex 体系里不存在
+这个 ID。客户端调时必须用 codex 真实模型 ID（gpt-5.4 / gpt-5.5 / ...），
+sub2api 不需要做 model rewrite。
+
+### 工程结论
+
+```
+1. sharedchat 检测优先级: body schema ≫ headers ≫ ja3 字节
+   - utls 1.8.2 不能精确仿 ja3 没关系，应用层补齐即可
+   - 这是 sub2api 主仓最大的方向修正
+
+2. Rust sidecar 工程已完成 (~/.../codex-tls-sidecar 子项目，ja3 字节 100% 等同)
+   - 当前未启用，但保留为未来"ja3 严格站"的备用路径
+   - 如未来撞到只校验 ja3 的站，accounts.extra 加 use_tls_sidecar=true + sidecar_url 即可启用
+
+3. v7 镜像已稳定 (已运行 16 min healthy)
+```
+
+### 收尾状态
+
+```
+✅ sub2api v7 镜像在远端稳定运行 (healthy 12 天 redis/pg, 16 min sub2api)
+✅ 账号 47 schedulable=true, inject_codex_headers=true, enable_tls_fingerprint=true
+✅ 测试 key sk-test-ed33e4dac... (group=33 gpt公益) 端到端可用
+✅ body 嫁接代码合入 main (commit 32e15944)
+⚠️ 本地 15 commit 未推 upstream/main (用户未要求 push)
+⚠️ Rust sidecar 容器关闭 (调试用，未删镜像 codex-tls-sidecar:0.2.1-openssl-3.5.5)
+```
+
+### Lessons (并入主 PRD)
+
+```
+1. 抓真包对照永远是 ja3 / 协议指纹类问题的首选诊断手段
+   - 不要在 utls 配置里盲调字段，先 mitmproxy 截真客户端
+   - SSLKEYLOGFILE 对静态 OpenSSL 不工作 → 用 mitmproxy + CA injection
+
+2. 检测站点的"严格度"层级分布远超预期:
+   ja3 字节 → HTTP/2 SETTINGS → headers → body schema → UUID 重放检测
+   越往后越严，但越往后越容易"模板复制" → 不要被 ja3 死锁住，先打通应用层
+
+3. "完成方案 A 之前不否定方案 A，但要保留方案 B" 是对的
+   - sidecar (方案 A: ja3 严格) 做完了，但实际上不需要
+   - body 嫁接 (方案 B: 应用层) 才是真出路
+   - 两个方案都保留代码：未来不同站可能各用一个
+
+4. codex 系列模型 ID 是 gpt-5.4 / gpt-5.5 / ... 这种小版本号，不存在裸 "gpt-5"
+   - 测试请求若用 gpt-5 必 503，跟 sharedchat 检测没关系，是 ID 本身不存在
+   - sub2api 不需要做 model rewrite，client 自己用合法 codex ID 即可
+```
