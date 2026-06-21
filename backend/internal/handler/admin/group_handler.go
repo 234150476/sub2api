@@ -373,6 +373,10 @@ func (h *GroupHandler) Update(c *gin.Context) {
 		MessagesDispatchModelConfig:     req.MessagesDispatchModelConfig,
 		ModelsListConfig:                req.ModelsListConfig,
 		RPMLimit:                        req.RPMLimit,
+		TrafficShapingEnabled:           req.TrafficShapingEnabled,
+		SSEEarlyKeepaliveEnabled:        req.SSEEarlyKeepaliveEnabled,
+		StreamSmoothingEnabled:          req.StreamSmoothingEnabled,
+		SilentRetry5xxEnabled:           req.SilentRetry5xxEnabled,
 		CopyAccountsFromGroupIDs:        req.CopyAccountsFromGroupIDs,
 	})
 	if err != nil {

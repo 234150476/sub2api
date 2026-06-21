@@ -271,6 +271,12 @@ type UpdateGroupInput struct {
 	ModelsListConfig            *GroupModelsListConfig
 	// RPMLimit 分组 RPM 上限（0 = 不限制），nil 表示未提供不改动。
 	RPMLimit *int
+	// 流量伪装（migration 154）；nil 表示未提供不改动。
+	// 详见 service.GroupTrafficShaping。
+	TrafficShapingEnabled    *bool
+	SSEEarlyKeepaliveEnabled *bool
+	StreamSmoothingEnabled   *bool
+	SilentRetry5xxEnabled    *bool
 	// 从指定分组复制账号（同步操作：先清空当前分组的账号绑定，再绑定源分组的账号）
 	CopyAccountsFromGroupIDs []int64
 }
@@ -2157,6 +2163,19 @@ func (s *adminServiceImpl) UpdateGroup(ctx context.Context, id int64, input *Upd
 	}
 	if input.RPMLimit != nil {
 		group.RPMLimit = *input.RPMLimit
+	}
+	// 流量伪装（migration 154）；nil 表示前端未提供保留原值；非 nil 写入新值。
+	if input.TrafficShapingEnabled != nil {
+		group.TrafficShapingEnabled = *input.TrafficShapingEnabled
+	}
+	if input.SSEEarlyKeepaliveEnabled != nil {
+		group.SSEEarlyKeepaliveEnabled = *input.SSEEarlyKeepaliveEnabled
+	}
+	if input.StreamSmoothingEnabled != nil {
+		group.StreamSmoothingEnabled = *input.StreamSmoothingEnabled
+	}
+	if input.SilentRetry5xxEnabled != nil {
+		group.SilentRetry5xxEnabled = *input.SilentRetry5xxEnabled
 	}
 	sanitizeGroupMessagesDispatchFields(group)
 
