@@ -3456,6 +3456,9 @@ export default {
         endpointCapabilities: 'Endpoint capabilities',
         endpointCapabilitiesDesc:
           'Used by account routing. The text endpoint follows the Responses API support setting above and is shown as Responses, Chat Completions, or auto mode; Embeddings independently controls /v1/embeddings.',
+        injectCodexHeaders: 'Inject Codex CLI fingerprint (community sites)',
+        injectCodexHeadersDesc:
+          'When enabled, forwarded requests inject real codex CLI application-layer headers (originator / x-codex-* / session-id, etc.) and graft the client body onto the real codex body template. Used to bypass codex_access_restricted on community sites like sharedchat. OpenAI API Key accounts only.',
         capabilityResponses: 'Responses',
         capabilityTextAuto: 'Responses / Chat Completions (Auto)',
         capabilityResponsesAuto: 'Responses (auto probe)',
@@ -3508,6 +3511,9 @@ export default {
         apiKeyPassthrough: 'Auto passthrough (auth only)',
         apiKeyPassthroughDesc:
           'Only applies to Anthropic API Key accounts. When enabled, messages/count_tokens are forwarded in passthrough mode with auth replacement only, while billing/concurrency/audit and safety filtering are preserved. Disable to roll back immediately.',
+        strictPassthrough: 'Strict passthrough (do not modify body)',
+        strictPassthroughDesc:
+          'Builds on auto passthrough by fully skipping body sanitize (StripEmptyTextBlocks / sanitizeAnthropicBodyForBetaTokens). Use when upstream gateways (e.g. PackyCode) hash-check the request body and reply "request body appears tampered". Only effective when auto passthrough is enabled.',
         webSearchEmulation: 'Web Search Emulation',
         webSearchEmulationDesc:
           'Enable web search emulation for this API Key account. When a pure web_search request is detected, the gateway calls a third-party search API and constructs the response locally. Default follows channel config.',

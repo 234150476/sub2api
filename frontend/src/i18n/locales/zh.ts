@@ -3612,6 +3612,9 @@ export default {
         endpointCapabilities: '端点能力',
         endpointCapabilitiesDesc:
           '用于调度筛选。文本端点会跟随上方 Responses API 支持显示为 Responses、Chat Completions 或自动模式；Embeddings 独立控制 /v1/embeddings。',
+        injectCodexHeaders: '注入 Codex CLI 特征（公益站）',
+        injectCodexHeadersDesc:
+          '开启后转发请求会注入真 codex CLI 应用层 headers（originator / x-codex-* / session-id 等）并把客户端 body 嫁接到真 codex body 模板。用于过 sharedchat 等公益站的 codex_access_restricted 校验。仅 OpenAI API Key 账号可用。',
         capabilityResponses: 'Responses',
         capabilityTextAuto: 'Responses / Chat Completions（自动）',
         capabilityResponsesAuto: 'Responses（自动探测）',
@@ -3662,6 +3665,9 @@ export default {
         apiKeyPassthrough: '自动透传（仅替换认证）',
         apiKeyPassthroughDesc:
           '仅对 Anthropic API Key 生效。开启后，messages/count_tokens 请求将透传上游并仅替换认证，保留计费/并发/审计及必要安全过滤；关闭即可回滚到现有兼容链路。',
+        strictPassthrough: '严格透传（不修改请求体）',
+        strictPassthroughDesc:
+          '在自动透传基础上完全跳过 body sanitize（StripEmptyTextBlocks / sanitizeAnthropicBodyForBetaTokens）。适用于 PackyCode 等会对请求体做 hash 校验、报"请求体疑似被篡改"的上游网关。仅在自动透传开启时生效。',
         webSearchEmulation: 'Web Search 模拟',
         webSearchEmulationDesc:
           '为该 API Key 账号启用 web search 模拟。客户端发送纯 web_search 请求时，由网关调用第三方搜索 API 并构造响应返回。默认跟随渠道配置。',

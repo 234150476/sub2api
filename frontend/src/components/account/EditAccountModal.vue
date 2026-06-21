@@ -1490,6 +1490,36 @@
           </div>
           <p class="input-hint">{{ t('admin.accounts.openai.endpointCapabilitiesDesc') }}</p>
         </div>
+
+        <!-- OpenAI API Key: 注入 codex CLI 应用层 headers + body 嫁接（公益站如 sharedchat） -->
+        <div
+          v-if="account?.type === 'apikey'"
+          class="border-t border-gray-200 pt-4 dark:border-dark-600"
+        >
+          <div class="flex items-center justify-between">
+            <div class="pr-4">
+              <label class="input-label mb-0">{{ t('admin.accounts.openai.injectCodexHeaders') }}</label>
+              <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                {{ t('admin.accounts.openai.injectCodexHeadersDesc') }}
+              </p>
+            </div>
+            <button
+              type="button"
+              @click="injectCodexHeadersEnabled = !injectCodexHeadersEnabled"
+              :class="[
+                'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2',
+                injectCodexHeadersEnabled ? 'bg-primary-600' : 'bg-gray-200 dark:bg-dark-600'
+              ]"
+            >
+              <span
+                :class="[
+                  'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
+                  injectCodexHeadersEnabled ? 'translate-x-5' : 'translate-x-0'
+                ]"
+              />
+            </button>
+          </div>
+        </div>
       </div>
 
       <!-- Anthropic API Key 自动透传开关 -->
@@ -1519,6 +1549,33 @@
               ]"
             />
           </button>
+        </div>
+
+        <!-- 严格透传子开关：仅在 anthropic_passthrough 已开启时可见 -->
+        <div v-if="anthropicPassthroughEnabled" class="mt-4 ml-4 border-l-2 border-primary-200 pl-4 dark:border-primary-800">
+          <div class="flex items-center justify-between">
+            <div class="pr-4">
+              <label class="input-label mb-0">{{ t('admin.accounts.anthropic.strictPassthrough') }}</label>
+              <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                {{ t('admin.accounts.anthropic.strictPassthroughDesc') }}
+              </p>
+            </div>
+            <button
+              type="button"
+              @click="strictAnthropicPassthroughEnabled = !strictAnthropicPassthroughEnabled"
+              :class="[
+                'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2',
+                strictAnthropicPassthroughEnabled ? 'bg-primary-600' : 'bg-gray-200 dark:bg-dark-600'
+              ]"
+            >
+              <span
+                :class="[
+                  'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
+                  strictAnthropicPassthroughEnabled ? 'translate-x-5' : 'translate-x-0'
+                ]"
+              />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -2588,6 +2645,8 @@ const codexCLIOnlyAllowClaudeCodeEnabled = ref(false)
 type CodexImageGenerationBridgeMode = 'inherit' | 'enabled' | 'disabled'
 const codexImageGenerationBridgeMode = ref<CodexImageGenerationBridgeMode>('inherit')
 const anthropicPassthroughEnabled = ref(false)
+const strictAnthropicPassthroughEnabled = ref(false)
+const injectCodexHeadersEnabled = ref(false)
 const webSearchEmulationMode = ref('default')
 const webSearchGlobalEnabled = ref(false)
 const {
@@ -2964,6 +3023,8 @@ const syncFormFromAccount = (newAccount: Account | null) => {
   codexCLIOnlyAllowClaudeCodeEnabled.value = false
   codexImageGenerationBridgeMode.value = 'inherit'
   anthropicPassthroughEnabled.value = false
+  strictAnthropicPassthroughEnabled.value = false
+  injectCodexHeadersEnabled.value = false
   webSearchEmulationMode.value = 'default'
   if (newAccount.platform === 'openai' && (newAccount.type === 'oauth' || newAccount.type === 'apikey')) {
     openaiPassthroughEnabled.value = extra?.openai_passthrough === true || extra?.openai_oauth_passthrough === true
@@ -3003,6 +3064,9 @@ const syncFormFromAccount = (newAccount: Account | null) => {
         Array.isArray(extra?.codex_cli_only_allowed_clients) &&
         (extra.codex_cli_only_allowed_clients as unknown[]).includes('claude_code')
     }
+    if (newAccount.type === 'apikey') {
+      injectCodexHeadersEnabled.value = extra?.inject_codex_headers === true
+    }
     const credentials = newAccount.credentials as Record<string, unknown> | undefined
     const compactMappings = credentials?.compact_model_mapping as Record<string, string> | undefined
     if (compactMappings && typeof compactMappings === 'object') {
@@ -3011,6 +3075,7 @@ const syncFormFromAccount = (newAccount: Account | null) => {
   }
   if (newAccount.platform === 'anthropic' && newAccount.type === 'apikey') {
     anthropicPassthroughEnabled.value = extra?.anthropic_passthrough === true
+    strictAnthropicPassthroughEnabled.value = extra?.strict_anthropic_passthrough === true
     // 三态：string "default"/"enabled"/"disabled"，向后兼容旧 bool
     const wsVal = extra?.web_search_emulation
     if (wsVal === 'enabled' || wsVal === 'disabled') {
@@ -4064,6 +4129,12 @@ const handleSubmit = async () => {
       } else {
         delete newExtra.anthropic_passthrough
       }
+      // strict 子开关：仅当 anthropic_passthrough 也开启时生效；passthrough 关闭则强制清掉。
+      if (anthropicPassthroughEnabled.value && strictAnthropicPassthroughEnabled.value) {
+        newExtra.strict_anthropic_passthrough = true
+      } else {
+        delete newExtra.strict_anthropic_passthrough
+      }
       if (webSearchEmulationMode.value === 'default') {
         delete newExtra.web_search_emulation
       } else {
@@ -4102,6 +4173,11 @@ const handleSubmit = async () => {
           delete newExtra.openai_responses_mode
         } else {
           newExtra.openai_responses_mode = openAIResponsesMode.value
+        }
+        if (injectCodexHeadersEnabled.value) {
+          newExtra.inject_codex_headers = true
+        } else {
+          delete newExtra.inject_codex_headers
         }
 		}
 		if (autoPause5hThreshold.value != null && autoPause5hThreshold.value > 0) {
