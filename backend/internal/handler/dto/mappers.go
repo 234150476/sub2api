@@ -191,6 +191,10 @@ func groupFromServiceBase(g *service.Group) Group {
 		RequireOAuthOnly:                g.RequireOAuthOnly,
 		RequirePrivacySet:               g.RequirePrivacySet,
 		RPMLimit:                        g.RPMLimit,
+		TrafficShapingEnabled:           g.TrafficShapingEnabled,
+		SSEEarlyKeepaliveEnabled:        g.SSEEarlyKeepaliveEnabled,
+		StreamSmoothingEnabled:          g.StreamSmoothingEnabled,
+		SilentRetry5xxEnabled:           g.SilentRetry5xxEnabled,
 		CreatedAt:                       g.CreatedAt,
 		UpdatedAt:                       g.UpdatedAt,
 	}

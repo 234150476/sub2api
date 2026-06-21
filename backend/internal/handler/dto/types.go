@@ -120,6 +120,12 @@ type Group struct {
 	// RPMLimit 分组级每分钟请求数上限（0 = 不限制），设置后覆盖用户级 rpm_limit。
 	RPMLimit int `json:"rpm_limit"`
 
+	// 流量伪装（migration 154）；详见 service.GroupTrafficShaping
+	TrafficShapingEnabled    bool `json:"traffic_shaping_enabled"`
+	SSEEarlyKeepaliveEnabled bool `json:"sse_early_keepalive_enabled"`
+	StreamSmoothingEnabled   bool `json:"stream_smoothing_enabled"`
+	SilentRetry5xxEnabled    bool `json:"silent_retry_5xx_enabled"`
+
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
