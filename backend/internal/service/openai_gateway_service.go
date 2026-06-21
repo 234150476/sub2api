@@ -4292,7 +4292,9 @@ func (s *OpenAIGatewayService) buildUpstreamRequest(ctx context.Context, c *gin.
 	// 公益站 codex body schema 改写：sharedchat 等公益站校验 body 含真 codex CLI 完整结构
 	// （instructions / tools / reasoning / client_metadata 等），简单 input 会被拒。
 	// 当账号启用 inject_codex_headers 时，把客户端 body 嫁接到真 codex body 模板。
-	if account.IsCodexHeadersInjectionEnabled() {
+	// codex_strict_passthrough=true 时跳过此 rewrite（信任客户端就是真 codex CLI），
+	// 保留客户端原始 body 不动以维持 prompt cache 连续性 + UUID 一致性。
+	if account.IsCodexHeadersInjectionEnabled() && !account.IsCodexStrictPassthrough() {
 		sessionID := strings.TrimSpace(c.GetHeader("session-id"))
 		if sessionID == "" {
 			sessionID = uuid.NewString()

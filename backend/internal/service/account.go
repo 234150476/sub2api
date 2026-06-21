@@ -1637,6 +1637,21 @@ func (a *Account) IsCodexHeadersInjectionEnabled() bool {
 	return false
 }
 
+// IsCodexStrictPassthrough 在 inject_codex_headers 基础上声明"严格透传"——
+// 跳过 body rewrite（codex_body_rewriter），保留客户端 codex CLI 发的原始 body。
+// 适用场景：客户端就是真 codex CLI，已经发完整且合法的 codex body，sub2api 只需要
+// 修补它没发齐的应用层 headers，不要重写 body 也不要重新生成 UUID 破坏 prompt cache 连续性。
+// 字段：accounts.extra.codex_strict_passthrough。
+// 仅在 inject_codex_headers=true 时才生效；默认 false（保持现有 body rewrite 行为，
+// 兼容 curl/普通 SDK 等不发完整 codex body 的客户端）。
+func (a *Account) IsCodexStrictPassthrough() bool {
+	if !a.IsCodexHeadersInjectionEnabled() {
+		return false
+	}
+	enabled, ok := a.Extra["codex_strict_passthrough"].(bool)
+	return ok && enabled
+}
+
 // GetTLSFingerprintProfileID 获取账号绑定的 TLS 指纹模板 ID
 // 返回 0 表示未绑定（使用内置默认 profile）
 func (a *Account) GetTLSFingerprintProfileID() int64 {

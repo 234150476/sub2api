@@ -1519,6 +1519,33 @@
               />
             </button>
           </div>
+
+          <!-- codex 严格透传子开关：仅在 inject_codex_headers 已开启时可见 -->
+          <div v-if="injectCodexHeadersEnabled" class="mt-4 ml-4 border-l-2 border-primary-200 pl-4 dark:border-primary-800">
+            <div class="flex items-center justify-between">
+              <div class="pr-4">
+                <label class="input-label mb-0">{{ t('admin.accounts.openai.codexStrictPassthrough') }}</label>
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  {{ t('admin.accounts.openai.codexStrictPassthroughDesc') }}
+                </p>
+              </div>
+              <button
+                type="button"
+                @click="codexStrictPassthroughEnabled = !codexStrictPassthroughEnabled"
+                :class="[
+                  'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2',
+                  codexStrictPassthroughEnabled ? 'bg-primary-600' : 'bg-gray-200 dark:bg-dark-600'
+                ]"
+              >
+                <span
+                  :class="[
+                    'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
+                    codexStrictPassthroughEnabled ? 'translate-x-5' : 'translate-x-0'
+                  ]"
+                />
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -2647,6 +2674,7 @@ const codexImageGenerationBridgeMode = ref<CodexImageGenerationBridgeMode>('inhe
 const anthropicPassthroughEnabled = ref(false)
 const strictAnthropicPassthroughEnabled = ref(false)
 const injectCodexHeadersEnabled = ref(false)
+const codexStrictPassthroughEnabled = ref(false)
 const webSearchEmulationMode = ref('default')
 const webSearchGlobalEnabled = ref(false)
 const {
@@ -3025,6 +3053,7 @@ const syncFormFromAccount = (newAccount: Account | null) => {
   anthropicPassthroughEnabled.value = false
   strictAnthropicPassthroughEnabled.value = false
   injectCodexHeadersEnabled.value = false
+  codexStrictPassthroughEnabled.value = false
   webSearchEmulationMode.value = 'default'
   if (newAccount.platform === 'openai' && (newAccount.type === 'oauth' || newAccount.type === 'apikey')) {
     openaiPassthroughEnabled.value = extra?.openai_passthrough === true || extra?.openai_oauth_passthrough === true
@@ -3066,6 +3095,7 @@ const syncFormFromAccount = (newAccount: Account | null) => {
     }
     if (newAccount.type === 'apikey') {
       injectCodexHeadersEnabled.value = extra?.inject_codex_headers === true
+      codexStrictPassthroughEnabled.value = extra?.codex_strict_passthrough === true
     }
     const credentials = newAccount.credentials as Record<string, unknown> | undefined
     const compactMappings = credentials?.compact_model_mapping as Record<string, string> | undefined
@@ -4178,6 +4208,12 @@ const handleSubmit = async () => {
           newExtra.inject_codex_headers = true
         } else {
           delete newExtra.inject_codex_headers
+        }
+        // strict 子开关：仅当 inject_codex_headers 也开启时生效；inject 关闭则强制清掉。
+        if (injectCodexHeadersEnabled.value && codexStrictPassthroughEnabled.value) {
+          newExtra.codex_strict_passthrough = true
+        } else {
+          delete newExtra.codex_strict_passthrough
         }
 		}
 		if (autoPause5hThreshold.value != null && autoPause5hThreshold.value > 0) {

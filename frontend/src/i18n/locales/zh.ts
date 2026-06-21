@@ -3615,6 +3615,9 @@ export default {
         injectCodexHeaders: '注入 Codex CLI 特征（公益站）',
         injectCodexHeadersDesc:
           '开启后转发请求会注入真 codex CLI 应用层 headers（originator / x-codex-* / session-id 等）并把客户端 body 嫁接到真 codex body 模板。用于过 sharedchat 等公益站的 codex_access_restricted 校验。仅 OpenAI API Key 账号可用。',
+        codexStrictPassthrough: 'Codex 严格透传（保留客户端 body）',
+        codexStrictPassthroughDesc:
+          '在注入 Codex 特征基础上跳过 body rewrite，保留客户端原始 body 不动。适用于客户端就是真 codex CLI（已发完整合法 codex body）的场景，让 prompt cache_key 与 UUID 在多 turn 间保持连续，提升上游 prompt cache 命中率。仅在"注入 Codex CLI 特征"开启时生效。注意：管理后台"测试连接"按钮无视此开关（测试 payload 是 sub2api 简化版必须经过 rewrite 才能过校验）。',
         capabilityResponses: 'Responses',
         capabilityTextAuto: 'Responses / Chat Completions（自动）',
         capabilityResponsesAuto: 'Responses（自动探测）',
