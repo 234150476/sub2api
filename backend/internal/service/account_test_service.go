@@ -308,8 +308,11 @@ func (s *AccountTestService) testClaudeAccountConnection(c *gin.Context, account
 		body, _ := io.ReadAll(resp.Body)
 		errMsg := fmt.Sprintf("API returned %d: %s", resp.StatusCode, string(body))
 
-		// 403 表示账号被上游封禁，标记为 error 状态
-		if resp.StatusCode == http.StatusForbidden {
+		// 403 表示账号被上游封禁，标记为 error 状态。
+		// 但 strict_anthropic_passthrough 账号（PackyCode 等严格站）发 sub2api 简化
+		// 测试 payload 必然被上游 hash 校验打回 403，跳过 SetError 避免误伤——
+		// 这类账号的真实可用性应由真客户端流量证明，不由测试按钮判定。
+		if resp.StatusCode == http.StatusForbidden && !account.IsAnthropicStrictPassthrough() {
 			_ = s.accountRepo.SetError(ctx, account.ID, errMsg)
 		}
 
