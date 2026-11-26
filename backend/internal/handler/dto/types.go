@@ -283,6 +283,8 @@ type Account struct {
 	CacheTTLOverrideEnabled *bool   `json:"cache_ttl_override_enabled,omitempty"`
 	CacheTTLOverrideTarget  *string `json:"cache_ttl_override_target,omitempty"`
 
+	FakeFirstEventEnabled *bool `json:"fake_first_event_enabled,omitempty"`
+
 	// 自定义 Base URL 中继转发（仅 Anthropic OAuth/SetupToken 账号有效）
 	CustomBaseURLEnabled *bool   `json:"custom_base_url_enabled,omitempty"`
 	CustomBaseURL        *string `json:"custom_base_url,omitempty"`
@@ -393,6 +395,7 @@ type AccountListItem struct {
 	EnableSessionIDMasking  *bool    `json:"session_id_masking_enabled,omitempty"`
 	CacheTTLOverrideEnabled *bool    `json:"cache_ttl_override_enabled,omitempty"`
 	CacheTTLOverrideTarget  *string  `json:"cache_ttl_override_target,omitempty"`
+	FakeFirstEventEnabled   *bool    `json:"fake_first_event_enabled,omitempty"`
 	CustomBaseURLEnabled    *bool    `json:"custom_base_url_enabled,omitempty"`
 	CustomBaseURL           *string  `json:"custom_base_url,omitempty"`
 

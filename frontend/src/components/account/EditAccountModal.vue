@@ -3289,6 +3289,38 @@
         </div>
       </div>
 
+      <!-- 首字加速 (仅 API Key 账号) -->
+      <div
+        v-if="account?.type === 'apikey'"
+        class="border-t border-gray-200 pt-4 dark:border-dark-600"
+      >
+        <div class="rounded-lg border border-gray-200 p-4 dark:border-dark-600">
+          <div class="flex items-center justify-between">
+            <div>
+              <label class="input-label mb-0">{{ t('admin.accounts.quotaControl.fakeFirstEvent.label') }}</label>
+              <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                {{ t('admin.accounts.quotaControl.fakeFirstEvent.hint') }}
+              </p>
+            </div>
+            <button
+              type="button"
+              @click="fakeFirstEventEnabled = !fakeFirstEventEnabled"
+              :class="[
+                'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2',
+                fakeFirstEventEnabled ? 'bg-primary-600' : 'bg-gray-200 dark:bg-dark-600'
+              ]"
+            >
+              <span
+                :class="[
+                  'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
+                  fakeFirstEventEnabled ? 'translate-x-5' : 'translate-x-0'
+                ]"
+              />
+            </button>
+          </div>
+        </div>
+      </div>
+
       <div class="border-t border-gray-200 pt-4 dark:border-dark-600">
         <div>
           <label class="input-label">{{ t('common.status') }}</label>
@@ -4177,6 +4209,7 @@ const tlsFingerprintEnabled = ref(false)
 const tlsFingerprintProfileId = ref<number | null>(null)
 const tlsFingerprintProfiles = ref<{ id: number; name: string }[]>([])
 const sessionIdMaskingEnabled = ref(false)
+const fakeFirstEventEnabled = ref(false)
 const cacheTTLOverrideEnabled = ref(false)
 const cacheTTLOverrideTarget = ref<string>('5m')
 const customBaseUrlEnabled = ref(false)
@@ -5489,6 +5522,11 @@ function loadQuotaControlSettings(account: Account) {
     sessionIdMaskingEnabled.value = true
   }
 
+  // Load fake first event setting
+  if (account.fake_first_event_enabled === true) {
+    fakeFirstEventEnabled.value = true
+  }
+
   // Load cache TTL override setting
   if (account.cache_ttl_override_enabled === true) {
     cacheTTLOverrideEnabled.value = true
@@ -6221,6 +6259,13 @@ const handleSubmit = async () => {
         delete newExtra.session_id_masking_enabled
       }
 
+      // Fake first event setting
+      if (fakeFirstEventEnabled.value) {
+        newExtra.fake_first_event = true
+      } else {
+        delete newExtra.fake_first_event
+      }
+
       // Cache TTL override setting
       if (cacheTTLOverrideEnabled.value) {
         newExtra.cache_ttl_override_enabled = true
@@ -6260,6 +6305,12 @@ const handleSubmit = async () => {
         delete newExtra.web_search_emulation
       } else {
         newExtra.web_search_emulation = webSearchEmulationMode.value
+      }
+      // Fake first event setting
+      if (fakeFirstEventEnabled.value) {
+        newExtra.fake_first_event = true
+      } else {
+        delete newExtra.fake_first_event
       }
       updatePayload.extra = newExtra
     }
@@ -6395,6 +6446,12 @@ const handleSubmit = async () => {
         }
       }
 
+      // Fake first event setting
+      if (fakeFirstEventEnabled.value) {
+        newExtra.fake_first_event = true
+      } else {
+        delete newExtra.fake_first_event
+      }
       updatePayload.extra = newExtra
     }
 

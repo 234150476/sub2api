@@ -1372,6 +1372,9 @@ export interface Account {
   // 启用后将在15分钟内固定 metadata.user_id 中的 session ID
   session_id_masking_enabled?: boolean | null
 
+  // 首字加速：流式响应开头立即返回空字节
+  fake_first_event_enabled?: boolean | null
+
   // 缓存 TTL 强制替换（仅 Anthropic OAuth/SetupToken 账号有效）
   cache_ttl_override_enabled?: boolean | null
   cache_ttl_override_target?: string | null
