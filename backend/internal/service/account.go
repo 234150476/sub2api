@@ -1169,6 +1169,14 @@ func (a *Account) GetExtraString(key string) string {
 	return ""
 }
 
+func (a *Account) FakeFirstEventEnabled() bool {
+	if a == nil || a.Extra == nil {
+		return false
+	}
+	enabled, _ := a.Extra["fake_first_event"].(bool)
+	return enabled
+}
+
 func (a *Account) GetClaudeUserID() string {
 	if v := strings.TrimSpace(a.GetExtraString("claude_user_id")); v != "" {
 		return v

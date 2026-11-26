@@ -1154,6 +1154,10 @@ export default {
           label: 'Session ID Masking',
           hint: 'When enabled, fixes the session ID in metadata.user_id for 15 minutes, making upstream think requests come from the same session'
         },
+        fakeFirstEvent: {
+          label: 'First Token Boost',
+          hint: 'When enabled, flushes a blank byte at the start of streamed responses so the downstream gateway records near-zero TTFT'
+        },
         cacheTTLOverride: {
           label: 'Cache TTL Override',
           hint: 'Force all cache creation tokens to be billed as the selected TTL tier (5m or 1h)',

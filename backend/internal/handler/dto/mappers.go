@@ -333,6 +333,11 @@ func AccountFromServiceShallow(a *service.Account) *Account {
 			target := a.GetCacheTTLOverrideTarget()
 			out.CacheTTLOverrideTarget = &target
 		}
+		// 首字加速（Fake First Event）
+		if a.FakeFirstEventEnabled() {
+			enabled := true
+			out.FakeFirstEventEnabled = &enabled
+		}
 		// 自定义 Base URL 中继转发
 		if a.IsCustomBaseURLEnabled() {
 			enabled := true
@@ -482,7 +487,8 @@ func AccountListItemFromAccount(a *Account) *AccountListItem {
 		RPMStrategy: a.RPMStrategy, RPMStickyBuffer: a.RPMStickyBuffer, UserMsgQueueMode: a.UserMsgQueueMode,
 		EnableTLSFingerprint: a.EnableTLSFingerprint, TLSFingerprintProfileID: a.TLSFingerprintProfileID,
 		EnableSessionIDMasking: a.EnableSessionIDMasking, CacheTTLOverrideEnabled: a.CacheTTLOverrideEnabled,
-		CacheTTLOverrideTarget: a.CacheTTLOverrideTarget, CustomBaseURLEnabled: a.CustomBaseURLEnabled,
+		CacheTTLOverrideTarget: a.CacheTTLOverrideTarget, FakeFirstEventEnabled: a.FakeFirstEventEnabled,
+		CustomBaseURLEnabled: a.CustomBaseURLEnabled,
 		CustomBaseURL: a.CustomBaseURL, QuotaLimit: a.QuotaLimit, QuotaUsed: a.QuotaUsed,
 		QuotaDailyLimit: a.QuotaDailyLimit, QuotaDailyUsed: a.QuotaDailyUsed, QuotaWeeklyLimit: a.QuotaWeeklyLimit,
 		QuotaWeeklyUsed: a.QuotaWeeklyUsed, QuotaDailyResetMode: a.QuotaDailyResetMode,

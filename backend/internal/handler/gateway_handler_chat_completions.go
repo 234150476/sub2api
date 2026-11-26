@@ -294,6 +294,11 @@ func (h *GatewayHandler) ChatCompletions(c *gin.Context) {
 			continue
 		}
 
+		// Fake First Event: Forward 前写入空开头包，让下游立即收到首个 data 行
+		if reqStream && account.FakeFirstEventEnabled() && !streamStarted {
+			writeFakeFirstChatChunks(c, reqModel)
+			streamStarted = true
+		}
 		// 5. Forward request
 		writerSizeBeforeForward := c.Writer.Size()
 		forwardBody := body

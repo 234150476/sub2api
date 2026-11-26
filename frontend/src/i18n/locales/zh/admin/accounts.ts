@@ -1266,6 +1266,10 @@ export default {
           label: '会话 ID 伪装',
           hint: '启用后将在 15 分钟内固定 metadata.user_id 中的 session ID，使上游认为请求来自同一会话'
         },
+        fakeFirstEvent: {
+          label: '首字加速',
+          hint: '启用后在流式响应开头立即返回一个空字节，使下游网关记录极短的首字响应时间'
+        },
         cacheTTLOverride: {
           label: '缓存 TTL 强制替换',
           hint: '将所有缓存创建 token 强制按指定的 TTL 类型（5分钟或1小时）计费',

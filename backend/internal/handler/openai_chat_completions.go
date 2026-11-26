@@ -245,6 +245,12 @@ func (h *OpenAIGatewayHandler) ChatCompletions(c *gin.Context) {
 			return
 		}
 
+		// Fake First Event: Forward 前写入空开头包，让下游立即收到首个 data 行
+		if reqStream && account.FakeFirstEventEnabled() && !streamStarted {
+			writeFakeFirstChatChunks(c, reqModel)
+			streamStarted = true
+		}
+
 		service.SetOpsLatencyMs(c, service.OpsRoutingLatencyMsKey, time.Since(routingStart).Milliseconds())
 		forwardStart := time.Now()
 
