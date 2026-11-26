@@ -651,9 +651,9 @@ import {
 import { useClipboard } from '@/composables/useClipboard'
 import Icon from '@/components/icons/Icon.vue'
 
-const GITHUB_REPO = 'Wei-Shaw/sub2api'
-// Docker Hub image published by CI (tags carry no "v" prefix, e.g. weishaw/sub2api:0.1.146)
-const DOCKER_IMAGE = 'weishaw/sub2api'
+const GITHUB_REPO = '234150476/sub2api'
+// GHCR image published by our release CI (tags carry no "v" prefix, e.g. ghcr.io/234150476/sub2api:0.2.25)
+const DOCKER_IMAGE = 'ghcr.io/234150476/sub2api'
 
 const { t } = useI18n()
 
