@@ -1,0 +1,114 @@
+# 跟着官方发版：
+#   每小时看一眼官方有没有新 release tag
+#   -> main 原样同步官方
+#   -> 把我们的补丁提交（首字加速 + 在线更新指向本仓库）摘到官方新 tag 上 -> 单测
+#   -> 推 fake-first-event 分支 + 打同名 tag -> 官方自带的 release.yml 接手，按官方格式发 Release
+# 之后服务器网页上的"在线更新"按钮就能直接从本仓库升级。
+# 推送用 FTE_PUSH_TOKEN（细粒度令牌：仅本仓库，Contents + Workflows 读写）：
+#   GitHub 自带 token 不能推含 workflow 文件的提交，推的 tag 也不会触发 release.yml。
+name: FTE sync and release
+
+on:
+  schedule:
+    - cron: '23 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fte-sync-release
+  cancel-in-progress: false
+
+env:
+  # release.yml 发版后会往默认分支推这种提交，它不属于我们的补丁
+  NOT_OUR_PATCH: '^chore: sync VERSION'
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: fake-first-event
+          fetch-depth: 0
+          token: ${{ secrets.FTE_PUSH_TOKEN }}
+
+      - name: Mirror upstream main and find the newest release
+        id: ver
+        run: |
+          git remote add upstream https://github.com/Wei-Shaw/sub2api.git
+          git fetch --quiet --no-tags upstream main '+refs/tags/*:refs/upstream-tags/*'
+          git push origin refs/remotes/upstream/main:refs/heads/main
+          latest=$(git for-each-ref --format='%(refname:lstrip=2)' refs/upstream-tags \
+            | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1)
+          [ -n "$latest" ] || { echo "没拿到官方 tag" >&2; exit 1; }
+          echo "latest=$latest" >> "$GITHUB_OUTPUT"
+          if git rev-parse -q --verify "refs/tags/$latest" >/dev/null; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "官方最新 $latest，我们已经发过了。" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "官方出了新版 $latest，开始套补丁。" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Put our patch on top of the new release
+        if: steps.ver.outputs.skip != 'true'
+        env:
+          LATEST: ${{ steps.ver.outputs.latest }}
+        run: |
+          git config user.name fte-bot && git config user.email fte-bot@users.noreply.github.com
+          base=$(git merge-base HEAD upstream/main)
+          mapfile -t ours < <(git rev-list --reverse --no-merges --invert-grep --grep="$NOT_OUR_PATCH" "$base..HEAD")
+          [ "${#ours[@]}" -gt 0 ] || { echo "没找到我们的补丁提交" | tee -a "$GITHUB_STEP_SUMMARY"; exit 1; }
+          {
+            echo "### 我们改过、官方这次也改了的文件"
+            comm -12 <(git diff --name-only "$base" HEAD -- . ':!backend/cmd/server/VERSION' | sort) \
+                     <(git diff --name-only "$base" "refs/upstream-tags/$LATEST" | sort) \
+              | sed 's/^/- /' | grep . || echo "（无，0 个重叠）"
+          } >> "$GITHUB_STEP_SUMMARY"
+          git checkout -q --detach "refs/upstream-tags/$LATEST"
+          if ! git cherry-pick "${ours[@]}"; then
+            {
+              echo "### 冲突：官方改了我们改的同一处，需要手动处理"
+              git diff --name-only --diff-filter=U | sed 's/^/- /'
+            } | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+
+      - uses: actions/setup-go@v6
+        if: steps.ver.outputs.skip != 'true'
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
+
+      - name: Build and unit test
+        if: steps.ver.outputs.skip != 'true'
+        working-directory: backend
+        run: |
+          go build ./...
+          go test -tags=unit ./internal/handler/ -count=1
+          go test -tags=unit ./internal/service/ -run 'TestUpdateService' -count=1
+
+      - name: Push branch and tag (the tag starts release.yml)
+        if: steps.ver.outputs.skip != 'true'
+        env:
+          LATEST: ${{ steps.ver.outputs.latest }}
+        run: |
+          notes=$(curl -fsSL "https://api.github.com/repos/Wei-Shaw/sub2api/releases/tags/$LATEST" | jq -r '.body // ""') || notes=""
+          {
+            echo "$LATEST + 首字加速"
+            echo
+            echo "基于官方 $LATEST，额外包含：按账号开关的首字加速；在线更新/回滚改为从本仓库取发布。"
+            echo
+            echo "---"
+            echo
+            echo "官方更新说明（https://github.com/Wei-Shaw/sub2api/releases/tag/$LATEST）："
+            echo
+            printf '%s\n' "$notes"
+          } > "$RUNNER_TEMP/tag-message"
+          git tag -a "$LATEST" --cleanup=verbatim -F "$RUNNER_TEMP/tag-message"
+          git push --force-with-lease="fake-first-event:$(git rev-parse origin/fake-first-event)" \
+            origin HEAD:refs/heads/fake-first-event
+          git push origin "refs/tags/$LATEST"
+          echo "已推送 $LATEST，官方 Release 流程接手构建发布。" >> "$GITHUB_STEP_SUMMARY"
